@@ -59,7 +59,7 @@ function applySettings(){
   document.documentElement.style.setProperty('--font-scale',settings.fontScale);
   document.documentElement.lang=settings.language;
   document.documentElement.dir=settings.language==='en'?'ltr':'rtl';
-  document.title=settings.language==='en'?'Sama OS - Personal System':'Sama OS — نظامك الشخصي';
+  document.title=settings.language==='en'?'Personal trackers - Personal System':'Personal trackers — نظامك الشخصي';
 
   const fontRange=document.getElementById('font-scale-range');
   const fontLabel=document.getElementById('font-scale-label');
@@ -169,7 +169,13 @@ function updateLanguage(value){
 }
 
 function toast(msg,dur=2200){
-  const toastEl=document.getElementById('toast');
+  let toastEl=document.getElementById('toast');
+  if(!toastEl){
+    toastEl=document.createElement('div');
+    toastEl.id='toast';
+    toastEl.className='toast';
+    document.body.appendChild(toastEl);
+  }
   toastEl.textContent=msg;
   toastEl.classList.add('show');
   setTimeout(()=>toastEl.classList.remove('show'),dur);
@@ -209,6 +215,7 @@ let authNoticeState={message:'',type:'info',visibility:'any'};
 
 function authPanelElements(panel){
   return {
+    name:panel.querySelector('[data-auth-input="name"]'),
     email:panel.querySelector('[data-auth-input="email"]'),
     password:panel.querySelector('[data-auth-input="password"]'),
     message:panel.querySelector('[data-auth-message]'),
@@ -268,7 +275,7 @@ function setAuthBusy(busy){
   authPanels().forEach(panel=>{
     panel.classList.toggle('busy',Boolean(busy));
     const elements=authPanelElements(panel);
-    [elements.email,elements.password,elements.registerBtn,elements.loginBtn,elements.resetBtn,elements.logoutBtn].forEach(control=>{
+    [elements.name,elements.email,elements.password,elements.registerBtn,elements.loginBtn,elements.resetBtn,elements.logoutBtn].forEach(control=>{
       if(control)control.disabled=Boolean(busy);
     });
   });
@@ -276,7 +283,8 @@ function setAuthBusy(busy){
 
 function clearAuthFields(panel){
   if(!panel)return;
-  const {email,password}=authPanelElements(panel);
+  const {name,email,password}=authPanelElements(panel);
+  if(name)name.value='';
   if(email)email.value='';
   if(password)password.value='';
 }
@@ -325,8 +333,21 @@ function refreshAuthUi(){
   }
 }
 
-function validateAuthInputs(panel){
-  const {email,password}=authPanelElements(panel);
+function validateRegisterInputs(panel){
+  const panelElements=authPanelElements(panel);
+  const {name,email,password}=panelElements;
+  const nameValue=String(name&&name.value||'').trim();
+  const emailValue=String(email&&email.value||'').trim();
+  const passwordValue=String(password&&password.value||'');
+  if(!nameValue)return {ok:false,message:'أدخلي اسمك.'};
+  if(!emailValue)return {ok:false,message:'أدخلي البريد الإلكتروني.'};
+  if(!passwordValue)return {ok:false,message:'أدخلي كلمة المرور.'};
+  return {ok:true,name:nameValue,email:emailValue,password:passwordValue};
+}
+
+function validateLoginInputs(panel){
+  const panelElements=authPanelElements(panel);
+  const {email,password}=panelElements;
   const emailValue=String(email&&email.value||'').trim();
   const passwordValue=String(password&&password.value||'');
   if(!emailValue)return {ok:false,message:'أدخلي البريد الإلكتروني.'};
@@ -337,7 +358,7 @@ function validateAuthInputs(panel){
 async function handleAuthRegister(trigger){
   const panel=trigger&&trigger.closest?trigger.closest('[data-auth-panel]'):null;
   if(!panel||typeof registerWithEmail!=='function')return;
-  const validation=validateAuthInputs(panel);
+  const validation=validateRegisterInputs(panel);
   if(!validation.ok){
     setAuthMessage(validation.message,'error',{visibility:'guest',duration:4200});
     return;
@@ -345,7 +366,7 @@ async function handleAuthRegister(trigger){
   setAuthBusy(true);
   clearAuthMessage();
   try{
-    await registerWithEmail(validation.email,validation.password);
+    await registerWithEmail(validation.email,validation.password,validation.name);
     setAuthMessage('تم إنشاء الحساب وتسجيل الدخول بنجاح.','success',{visibility:'authenticated'});
   }catch(err){
     console.warn('Register failed',err);
@@ -358,7 +379,7 @@ async function handleAuthRegister(trigger){
 async function handleAuthLogin(trigger){
   const panel=trigger&&trigger.closest?trigger.closest('[data-auth-panel]'):null;
   if(!panel||typeof loginWithEmail!=='function')return;
-  const validation=validateAuthInputs(panel);
+  const validation=validateLoginInputs(panel);
   if(!validation.ok){
     setAuthMessage(validation.message,'error',{visibility:'guest',duration:4200});
     return;

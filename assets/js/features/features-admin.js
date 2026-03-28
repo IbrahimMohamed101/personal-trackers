@@ -1,5 +1,19 @@
 const ADMIN_COLLECTION_DEFS=[
   {
+    key:'weeklyReviews',
+    path:'weekly_reviews',
+    label:'المراجعة الأسبوعية',
+    empty:'لا توجد مراجعات أسبوعية لهذا المستخدم.',
+    columns:[
+      {label:'الأسبوع',value:row=>row.dateKey},
+      {label:'اللي نجح',value:row=>row.q1},
+      {label:'اللي مجاش صح',value:row=>row.q2},
+      {label:'التغيير القادم',value:row=>row.q3},
+      {label:'أهم درس',value:row=>row.q4},
+      {label:'الإنشاء',value:row=>row.createdAt},
+    ],
+  },
+  {
     key:'tasks',
     path:'tasks',
     label:'المهام',
@@ -74,12 +88,13 @@ const ADMIN_COLLECTION_DEFS=[
   },
   {
     key:'journalEntries',
-    path:'journalEntries',
+    path:'journal_entries',
     label:'اليومية',
     empty:'لا توجد يوميات لهذا المستخدم.',
     columns:[
       {label:'التاريخ',value:row=>row.dateKey},
       {label:'المحتوى',value:row=>row.content},
+      {label:'الامتنان',value:row=>adminJournalGratitude(row)},
       {label:'المزاج',value:row=>row.mood},
       {label:'الطاقة',value:row=>row.energy},
       {label:'الإنشاء',value:row=>row.createdAt},
@@ -102,7 +117,7 @@ const ADMIN_STATE={
   detailCache:{},
   selectedUid:'',
   search:'',
-  activeTab:'tasks',
+  activeTab:'journalEntries',
 };
 
 function adminCollectionKeySet(){
@@ -119,7 +134,7 @@ function adminResetState(){
   ADMIN_STATE.detailCache={};
   ADMIN_STATE.selectedUid='';
   ADMIN_STATE.search='';
-  ADMIN_STATE.activeTab='tasks';
+  ADMIN_STATE.activeTab='journalEntries';
 }
 
 function hasAdminAccess(){
@@ -211,6 +226,20 @@ function adminMoneyValue(value){
   const amount=Number(value);
   if(!Number.isFinite(amount))return '—';
   return `${escapeHtml(lang()==='en'?amount.toLocaleString('en-GB'):toArFull(amount))} ₽`;
+}
+
+function adminJournalGratitude(row){
+  const items=[row&&row.gratitude1,row&&row.gratitude2,row&&row.gratitude3].filter(Boolean);
+  return items.length?items.join(' | '):'—';
+}
+
+function adminJournalMoodMeta(value){
+  const numericMood=Number(value);
+  if(Array.isArray(window.JOURNAL_MOOD_OPTIONS)){
+    const match=window.JOURNAL_MOOD_OPTIONS.find(option=>Number(option.value)===numericMood);
+    if(match)return `${match.emoji} ${match.label}`;
+  }
+  return String(value??'—');
 }
 
 function adminGoalStatus(goal){
@@ -372,13 +401,54 @@ function adminDetailInfoCard(title,items){
 function adminRenderSummaryCards(detail){
   const counts=detail.counts;
   return `<div class="admin-summary-grid">
+    <div class="admin-summary-card"><span>اليومية</span><strong>${escapeHtml(String(counts.journalEntries))}</strong></div>
+    <div class="admin-summary-card"><span>الأسبوعي</span><strong>${escapeHtml(String(counts.weeklyReviews))}</strong></div>
     <div class="admin-summary-card"><span>المهام</span><strong>${escapeHtml(String(counts.tasks))}</strong></div>
     <div class="admin-summary-card"><span>العادات</span><strong>${escapeHtml(String(counts.habits))}</strong></div>
     <div class="admin-summary-card"><span>الأهداف</span><strong>${escapeHtml(String(counts.goals))}</strong></div>
     <div class="admin-summary-card"><span>المشاكل</span><strong>${escapeHtml(String(counts.problems))}</strong></div>
     <div class="admin-summary-card"><span>المصاريف</span><strong>${escapeHtml(String(counts.expenses))}</strong></div>
     <div class="admin-summary-card"><span>الملاحظات</span><strong>${escapeHtml(String(counts.notes))}</strong></div>
-    <div class="admin-summary-card"><span>اليومية</span><strong>${escapeHtml(String(counts.journalEntries))}</strong></div>
+  </div>`;
+}
+
+function adminRenderPriorityPanels(detail){
+  const latestJournal=(detail.collections.journalEntries||[])[0]||null;
+  const latestWeekly=(detail.collections.weeklyReviews||[])[0]||null;
+  return `<div class="admin-priority-grid">
+    <div class="admin-priority-card">
+      <div class="admin-section-head">
+        <div>
+          <div class="admin-section-title">آخر يومية</div>
+          <div class="admin-card-sub">المحتوى الذي كتبه المستخدم اليوم أو آخر 7 أيام</div>
+        </div>
+        ${latestJournal?`<span class="chip chip-blue">${escapeHtml(adminJournalMoodMeta(latestJournal.mood))}</span>`:''}
+      </div>
+      ${latestJournal?`
+        <div class="admin-priority-meta">التاريخ: ${adminTextValue(latestJournal.dateKey)} · الطاقة: ${adminTextValue(latestJournal.energy)}/10</div>
+        <div class="admin-priority-body">${adminTextValue(latestJournal.content)}</div>
+        <div class="admin-priority-list">
+          ${[latestJournal.gratitude1,latestJournal.gratitude2,latestJournal.gratitude3].filter(Boolean).map(item=>`<div class="admin-priority-item">ممتنة لـ: ${escapeHtml(item)}</div>`).join('')||'<div class="admin-priority-item muted">لا توجد عناصر امتنان.</div>'}
+        </div>
+      `:'<div class="admin-empty">لا توجد يوميات محفوظة لهذا المستخدم بعد.</div>'}
+    </div>
+    <div class="admin-priority-card">
+      <div class="admin-section-head">
+        <div>
+          <div class="admin-section-title">آخر مراجعة أسبوعية</div>
+          <div class="admin-card-sub">أهم ما كتبه المستخدم في مراجعة الأسبوع</div>
+        </div>
+      </div>
+      ${latestWeekly?`
+        <div class="admin-priority-meta">الأسبوع: ${adminTextValue(latestWeekly.dateKey)}</div>
+        <div class="admin-priority-list">
+          <div class="admin-priority-item"><strong>نجح:</strong> ${adminTextValue(latestWeekly.q1)}</div>
+          <div class="admin-priority-item"><strong>لم ينجح:</strong> ${adminTextValue(latestWeekly.q2)}</div>
+          <div class="admin-priority-item"><strong>سيغير:</strong> ${adminTextValue(latestWeekly.q3)}</div>
+          <div class="admin-priority-item"><strong>الدرس:</strong> ${adminTextValue(latestWeekly.q4)}</div>
+        </div>
+      `:'<div class="admin-empty">لا توجد مراجعات أسبوعية محفوظة لهذا المستخدم بعد.</div>'}
+    </div>
   </div>`;
 }
 
@@ -436,6 +506,7 @@ function adminRenderDetail(detail){
       <button class="btn btn-ghost btn-sm" type="button" onclick="refreshAdminSelectedUser()">تحديث المستخدم</button>
     </div>
   </div>
+  ${adminRenderPriorityPanels(detail)}
   ${adminRenderSummaryCards(detail)}
   <div class="admin-detail-grid">
     ${adminDetailInfoCard('Profile',[
@@ -549,6 +620,7 @@ async function loadAdminUserDetails(uid,{force=false}={}){
       problems,
       expenses,
       notes,
+      weeklyReviews,
       journalEntries,
     ]=await Promise.all([
       getUserRootDoc(uid),
@@ -558,10 +630,12 @@ async function loadAdminUserDetails(uid,{force=false}={}){
       getUserCollectionDocs(uid,'problems'),
       getUserCollectionDocs(uid,'expenses'),
       getUserCollectionDocs(uid,'notes'),
-      getUserCollectionDocs(uid,'journalEntries'),
+      getUserCollectionDocs(uid,'weekly_reviews'),
+      getUserCollectionDocs(uid,'journal_entries'),
     ]);
     const profile=adminNormalizeUserDoc(userDoc||{id:uid});
     const collections={
+      weeklyReviews:adminSortRows(weeklyReviews,'createdAt'),
       tasks:adminSortRows(tasks,'createdAt'),
       habits:adminSortRows(habits,'updatedAt'),
       goals:adminSortRows(goals,'updatedAt'),
@@ -578,7 +652,7 @@ async function loadAdminUserDetails(uid,{force=false}={}){
       lastActivityAt:adminLatestActivity(profile,collections),
     };
     ADMIN_STATE.detailCache[uid]=detail;
-    if(!adminCollectionKeySet().has(ADMIN_STATE.activeTab))ADMIN_STATE.activeTab='tasks';
+    if(!adminCollectionKeySet().has(ADMIN_STATE.activeTab))ADMIN_STATE.activeTab='journalEntries';
     adminRenderUserList();
     adminRenderDetail(detail);
     return detail;

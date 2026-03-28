@@ -212,6 +212,11 @@ const ENERGY_SYNC_DELAY_MS=250;
 
 function createDefaultState(){
   return {
+    onboarding:{
+      completed:false,
+      step:0,
+      skipped:false,
+    },
     energy:5,
     dayType:'normal',
     habits:[

@@ -31,7 +31,7 @@ async function createUserDocIfNotExists(user){
   const profile={
     ownerUid:user.uid,
     email:user.email||'',
-    displayName:user.displayName||'Sama User',
+    displayName:user.displayName||'المستخدم',
     photoURL:user.photoURL||'',
     providerId,
     timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'UTC',
@@ -116,20 +116,18 @@ function bindFirebaseAuthListener(){
     firebaseAuth.setPersistence(window.firebase.auth.Auth.Persistence.LOCAL).catch(err=>{
       console.warn('Firebase auth persistence setup failed.',err);
     }).finally(()=>{
-      firebaseAuth.onAuthStateChanged(async user=>{
+      firebaseAuth.onAuthStateChanged(user=>{
         currentFirebaseUser=user||null;
-        if(currentFirebaseUser){
-          try{
-            await createUserDocIfNotExists(currentFirebaseUser);
-          }catch(err){
-            console.warn('Failed to create/update user profile.',err);
-          }
-        }
         if(!authReadyResolved){
           authReadyResolved=true;
           resolve(currentFirebaseUser);
         }
         notifyAuthSubscribers(currentFirebaseUser);
+        if(currentFirebaseUser){
+          createUserDocIfNotExists(currentFirebaseUser).catch(err=>{
+            console.warn('Failed to create/update user profile.',err);
+          });
+        }
       },err=>{
         console.warn('Firebase auth observer failed.',err);
         currentFirebaseUser=null;
@@ -160,10 +158,13 @@ function observeAuthState(callback){
   return onFirebaseAuthStateChanged(callback);
 }
 
-async function registerWithEmail(email,password){
+async function registerWithEmail(email,password,name){
   if(!initFirebase()||!firebaseAuth)throw new Error('Firebase auth unavailable');
   const result=await firebaseAuth.createUserWithEmailAndPassword(String(email||'').trim(),String(password||''));
-  if(result&&result.user)await createUserDocIfNotExists(result.user);
+  if(result&&result.user){
+    if(name)await result.user.updateProfile({displayName:String(name).trim()});
+    await createUserDocIfNotExists(result.user);
+  }
   return result&&result.user?result.user:null;
 }
 

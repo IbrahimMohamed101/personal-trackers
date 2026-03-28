@@ -52,6 +52,11 @@ function stateToFirestore(state,uid){
       weeklyChallenge:snapshot.weeklyChallenge?String(snapshot.weeklyChallenge):null,
       weeklyChallengeDone:Boolean(snapshot.weeklyChallengeDone),
       weeklyChallengeProgress:Number(snapshot.weeklyChallengeProgress)||0,
+      onboarding:snapshot.onboarding&&typeof snapshot.onboarding==='object'?{
+        completed:Boolean(snapshot.onboarding.completed),
+        skipped:Boolean(snapshot.onboarding.skipped),
+        step:Number(snapshot.onboarding.step)||0,
+      }:{completed:false,skipped:false,step:Number(snapshot.onboarding&&snapshot.onboarding.step)||0},
       weekly:{
         w1:String(snapshot.weekly&&snapshot.weekly.w1||''),
         w2:String(snapshot.weekly&&snapshot.weekly.w2||''),
@@ -254,6 +259,11 @@ function firestoreToState(remote,fallbackState){
     weeklyChallenge:userDoc.weeklyChallenge!==undefined?userDoc.weeklyChallenge:fallback.weeklyChallenge,
     weeklyChallengeDone:userDoc.weeklyChallengeDone!==undefined?userDoc.weeklyChallengeDone:fallback.weeklyChallengeDone,
     weeklyChallengeProgress:userDoc.weeklyChallengeProgress!==undefined?userDoc.weeklyChallengeProgress:fallback.weeklyChallengeProgress,
+    onboarding:userDoc.onboarding&&typeof userDoc.onboarding==='object'?{
+      completed:Boolean(userDoc.onboarding.completed),
+      skipped:Boolean(userDoc.onboarding.skipped),
+      step:Number(userDoc.onboarding.step)||0,
+    }:(fallback.onboarding&&typeof fallback.onboarding==='object'?fallback.onboarding:{completed:false,step:0,skipped:false}),
     energyHistory:energyHistory.length?energyHistory:(fallback.energyHistory||[]),
     mvdDone:(Array.isArray(remote&&remote.mvdDone)?remote.mvdDone:[]).reduce((acc,row)=>{acc[row.id]=Array.isArray(row.doneIndices)?row.doneIndices:[];return acc;},{}),
     weekly:userDoc.weekly&&typeof userDoc.weekly==='object'?{

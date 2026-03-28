@@ -1,6 +1,12 @@
 function renderHome(){
   renderStats();
   updateLifeCards();
+  const energyInput=document.getElementById('energy-dashboard');
+  if(energyInput){
+    energyInput.oninput=function(){
+      setEnergy(this.value);
+    };
+  }
 }
 
 function renderStats(){

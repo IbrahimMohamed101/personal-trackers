@@ -1,32 +1,25 @@
 const DESKTOP_NAV_SECTIONS=[
-  {label:'الرئيسية',items:[{page:'home',icon:'⬡',label:'لوحة القيادة',active:true}]},
+  {label:'اليومي',items:[{page:'home',icon:'⬡',label:'لوحة القيادة',active:true}]},
   {
-    label:'التتبع',
+    label:'المتابعة',
     items:[
-      {page:'tasks',icon:'✅',label:'المهام اليومية'},
-      {page:'habits',icon:'◎',label:'العادات اليومية'},
-      {page:'money',icon:'◈',label:'المصاريف والتحويش'},
-      {page:'problems',icon:'◫',label:'إدارة المشاكل'},
+      {page:'tasks',icon:'✅',label:'المهام'},
+      {page:'habits',icon:'◎',label:'العادات'},
+      {page:'money',icon:'◈',label:'المالية'},
       {page:'journal',icon:'📝',label:'اليومية'},
-      {page:'analytics',icon:'📊',label:'التحليلات'},
     ],
   },
   {
-    label:'التخطيط',
+    label:'التحليل',
     items:[
-      {page:'goals',icon:'◬',label:'أهداف ٣ شهور'},
-      {page:'weekly',icon:'◧',label:'المراجعة الأسبوعية'},
+      {page:'analytics',icon:'📊',label:'الإحصائيات'},
+      {page:'weekly',icon:'◧',label:'مراجعة أسبوعية'},
     ],
   },
   {
-    label:'التطوير',
+    label:'إدارة',
     items:[
-      {page:'pomodoro',icon:'◴',label:'مؤقت بومودورو'},
-      {page:'achievements',icon:'🏆',label:'الإنجازات'},
-      {page:'guide',icon:'💡',label:'دليل التطور'},
-      {page:'tips',icon:'✦',label:'مكتبة النصائح',badge:'١٢'},
       {page:'settings',icon:'⚙',label:'الإعدادات'},
-      {page:'admin',icon:'🛡',label:'لوحة التحكم',adminOnly:true},
     ],
   },
 ];
@@ -88,6 +81,7 @@ function renderAuthPanel(variant='sidebar'){
       <div class="auth-user-email" data-auth-user-email>—</div>
     </div>
     <div class="auth-form" data-auth-form>
+      <input class="inp auth-input" type="text" placeholder="الاسم" autocomplete="name" data-auth-input="name">
       <input class="inp auth-input" type="email" placeholder="البريد الإلكتروني" autocomplete="email" data-auth-input="email">
       <input class="inp auth-input" type="password" placeholder="كلمة المرور" autocomplete="current-password" data-auth-input="password">
     </div>
@@ -105,11 +99,185 @@ function renderAuthPanel(variant='sidebar'){
   </div>`;
 }
 
+function renderOnboardingFlow(){
+  const step=S.onboarding?.step||0;
+  if(step===0){
+    return `<section class="onboarding" id="onboarding-flow" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,var(--surface) 0%,var(--background) 100%);">
+      <div class="onboarding-splash" style="text-align:center;max-width:400px;padding:40px 20px;">
+        <div style="font-size:80px;margin-bottom:20px;">🌟</div>
+        <h1 style="font-size:32px;margin-bottom:10px;color:var(--text1);">Personal Trackers</h1>
+        <p style="font-size:18px;color:var(--text2);margin-bottom:30px;line-height:1.6;">Track. Focus. Grow.</p>
+        <p style="color:var(--text3);margin-bottom:40px;font-size:14px;">مساحة شخصية لتنظيم حياتك بوضوح</p>
+        <button class="btn btn-primary" onclick="startOnboarding()" style="padding:14px 32px;font-size:16px;">ابدئي الآن</button>
+        <div style="margin-top:20px;font-size:12px;color:var(--text3);">
+          يستغرق حوالي دقيقتين فقط • بدون بيانات ائتمانية
+        </div>
+      </div>
+    </section>`;
+  }
+  
+  if(step===1){
+    return `<section class="onboarding" id="onboarding-flow" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--background);">
+      <div class="onboarding-card" style="max-width:500px;width:100%;padding:40px;margin:20px;">
+        <div style="text-align:center;margin-bottom:30px;">
+          <div style="font-size:48px;margin-bottom:10px;">🌱</div>
+          <h2 style="font-size:24px;color:var(--text1);">أول عادة لك</h2>
+          <p style="color:var(--text3);margin-top:8px;">ما هي الشيء الذي تريدين فعله يومياً؟</p>
+        </div>
+        <div style="background:var(--surface);padding:20px;border-radius:12px;margin-bottom:20px;">
+          <input class="inp" id="onboard-habit-input" type="text" placeholder="مثلاً: المشي الصباحي، قراءة الكتاب..." style="width:100%;margin-bottom:10px;font-size:14px;"  />
+          <div style="font-size:12px;color:var(--text3);line-height:1.6;">
+            💡 <strong>الخيارات الشهيرة:</strong> 🚴 رياضة • 📚 قراءة • 🧘 تأمل • 💧 شرب الماء
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="completeOnboardingStep(1)" style="width:100%;padding:12px;">التالي</button>
+        <button class="btn btn-ghost" onclick="skipOnboarding()" style="width:100%;padding:12px;margin-top:10px;font-size:12px;">تخطي</button>
+        <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--text3);">الخطوة 1 من 3</div>
+      </div>
+    </section>`;
+  }
+  
+  if(step===2){
+    return `<section class="onboarding" id="onboarding-flow" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--background);">
+      <div class="onboarding-card" style="max-width:500px;width:100%;padding:40px;margin:20px;">
+        <div style="text-align:center;margin-bottom:30px;">
+          <div style="font-size:48px;margin-bottom:10px;">✅</div>
+          <h2 style="font-size:24px;color:var(--text1);">أول مهمة لك</h2>
+          <p style="color:var(--text3);margin-top:8px;">ما الذي يجب أن تنجزيه اليوم؟</p>
+        </div>
+        <div style="background:var(--surface);padding:20px;border-radius:12px;margin-bottom:20px;">
+          <input class="inp" id="onboard-task-input" type="text" placeholder="مثلاً: إنهاء التقرير، مكالمة المدير..." style="width:100%;margin-bottom:15px;font-size:14px;" />
+          <select class="inp" id="onboard-task-priority" style="width:100%;margin-bottom:15px;padding:10px;border-radius:8px;background:var(--background);color:var(--text1);border:1px solid var(--text3);">
+            <option value="normal">عادي</option>
+            <option value="important">مهم</option>
+            <option value="urgent">عاجل</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:8px;color:var(--text3);font-size:12px;">
+            <input type="checkbox" id="onboard-task-reminder" />
+            أرسل لي تذكير (اختياري)
+          </label>
+        </div>
+        <button class="btn btn-primary" onclick="completeOnboardingStep(2)" style="width:100%;padding:12px;">التالي</button>
+        <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--text3);">الخطوة 2 من 3</div>
+      </div>
+    </section>`;
+  }
+  
+  if(step===3){
+    return `<section class="onboarding" id="onboarding-flow" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--background);">
+      <div class="onboarding-card" style="max-width:500px;width:100%;padding:40px;margin:20px;">
+        <div style="text-align:center;margin-bottom:30px;">
+          <div style="font-size:48px;margin-bottom:10px;">⚡</div>
+          <h2 style="font-size:24px;color:var(--text1);">كيف طاقتك اليوم؟</h2>
+          <p style="color:var(--text3);margin-top:8px;">هذا مؤشر لمدى استعدادك</p>
+        </div>
+        <div style="background:var(--surface);padding:24px;border-radius:12px;margin-bottom:20px;text-align:center;">
+          <div style="font-size:32px;letter-spacing:8px;margin-bottom:20px;">😔 😕 😐 🙂 😊 😄</div>
+          <input type="range" min="1" max="10" value="5" id="onboard-energy" style="width:100%;height:6px;cursor:pointer;" />
+          <div style="margin-top:15px;color:var(--gold);font-size:18px;font-weight:bold;" id="onboard-energy-display">طاقة متوسطة — يمكن التقدم</div>
+        </div>
+        <button class="btn btn-primary" onclick="completeOnboarding()" style="width:100%;padding:12px;">ابدئي اليوم!</button>
+        <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--text3);">الخطوة 3 من 3</div>
+      </div>
+    </section>`;
+  }
+  
+  return '';
+}
+
+function renderRedesignedDashboard(){
+  const today=todayKey();
+  const todayTasks=(S.tasks||[]).filter(t=>t.date===today).sort((a,b)=>a.done?1:-1).slice(0,3);
+  const topHabits=(S.habits||[]).slice(0,3);
+  const activeHabits=topHabits.filter(h=>!h.done.includes(today));
+  const completedToday=((S.tasks||[]).filter(t=>t.date===today&&t.done)||[]).length;
+  const habitRateThisWeek=topHabits.length?Math.round(topHabits.reduce((sum,h)=>{
+    const weekStart=challengeWeekStartKey(today);
+    let count=0;
+    for(let i=0;i<7;i++){
+      const date=shiftDateKey(weekStart,i);
+      if(h.done.includes(date))count++;
+    }
+    return sum+count/7;
+  },0)/topHabits.length*100):0;
+  
+  const hour=new Date().getHours();
+  const greeting=hour<5?'أهلاً بكِ':hour<12?'صباح الخير':hour<17?'مساء النور':'مساء الخير';
+  const currentUser=typeof getCurrentFirebaseUser==='function'?getCurrentFirebaseUser():null;
+  const userName=currentUser&&currentUser.displayName?currentUser.displayName:'الصديقة';
+  
+  return `<div style="padding:20px;max-width:900px;margin:0 auto;">
+    <div style="color:var(--text3);margin-bottom:30px;font-size:13px;">
+      ${greeting}، يا ${escapeHtml(userName)} • ${timeStr()}
+    </div>
+    
+    <div class="card-redesign" style="background:var(--surface);padding:20px;border-radius:12px;margin-bottom:20px;border-left:4px solid var(--gold);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
+        <h3 style="color:var(--text1);font-size:16px;margin:0;">⚡ طاقتك اليوم</h3>
+        <span style="color:var(--gold);font-weight:bold;font-size:18px;">${S.energy}/10</span>
+      </div>
+      <div style="background:var(--background);padding:12px;border-radius:8px;margin-bottom:8px;">
+        <input type="range" min="1" max="10" value="${S.energy}" id="energy-dashboard" oninput="setEnergy(this.value)" style="width:100%;height:6px;cursor:pointer;" />
+      </div>
+      <div style="font-size:12px;color:var(--text3);">${ENERGY_DESC[S.energy]||'طاقة متوسطة'}</div>
+    </div>
+    
+    <div class="card-redesign" style="background:var(--surface);padding:20px;border-radius:12px;margin-bottom:20px;border-left:4px solid var(--amber);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
+        <h3 style="color:var(--text1);font-size:16px;margin:0;">📋 أولوياتك اليوم</h3>
+        <span style="background:var(--background);color:var(--gold);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;">${todayTasks.length} مهام</span>
+      </div>
+      ${todayTasks.length?todayTasks.map((task,i)=>`<div style="background:var(--background);padding:12px;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">
+        <input type="checkbox" ${task.done?'checked':''} onchange="toggleTaskDone(${task.id},this.checked)" style="cursor:pointer;width:20px;height:20px;" />
+        <div style="flex:1;">
+          <div style="color:var(--text1);font-size:14px;${task.done?'opacity:0.5;text-decoration:line-through':''}">${escapeHtml(task.title)}</div>
+        </div>
+        <span style="color:var(--text3);font-size:12px;">${task.time||'09:00'}</span>
+      </div>`).join(''):'<div style="color:var(--text3);padding:20px;text-align:center;font-size:14px;">✅ يومك نظيف — أضيفي مهمة جديدة</div>'}
+    </div>
+    
+    <div class="card-redesign" style="background:var(--surface);padding:20px;border-radius:12px;margin-bottom:20px;border-left:4px solid var(--green);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
+        <h3 style="color:var(--text1);font-size:16px;margin:0;">🌱 عاداتك النشطة</h3>
+      </div>
+      ${activeHabits.length?activeHabits.map(habit=>{
+        const streak=calcMaxStreak(habit.done);
+        return `<div style="background:var(--background);padding:12px;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="markHabitDoneFromDashboard('${habit.id}')">
+          <div style="flex:1;">
+            <div style="color:var(--text1);font-size:14px;">${escapeHtml(habit.name)}</div>
+            <div style="font-size:11px;color:var(--gold);">🔥 ${streak} يوم</div>
+          </div>
+          <span style="background:var(--gold);color:var(--background);padding:4px 8px;border-radius:6px;font-size:11px;font-weight:bold;">اضغط لإكمال</span>
+        </div>`;
+      }).join(''):'<div style="color:var(--text3);padding:20px;text-align:center;font-size:14px;">أضيفي أول عادة لك</div>'}
+    </div>
+    
+    <div class="card-redesign" style="background:linear-gradient(135deg,var(--green) 0%,var(--emerald) 100%);color:white;padding:20px;border-radius:12px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:14px;opacity:0.9;">🏆 إحصائيات الأسبوع</div>
+          <div style="font-size:24px;font-weight:bold;margin-top:5px;">${habitRateThisWeek}% إنجاز عادات</div>
+          <div style="font-size:12px;opacity:0.8;margin-top:5px;">✅ ${completedToday} مهام منجزة اليوم</div>
+        </div>
+      </div>
+    </div>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;">
+      <button class="btn btn-primary" onclick="addTask()" style="padding:12px;">+ إضافة مهمة</button>
+      <button class="btn btn-ghost" onclick="addHabitModal()" style="padding:12px;">+ عادة جديدة</button>
+    </div>
+    
+    <div style="position:fixed;bottom:30px;right:30px;z-index:30;">
+      <button class="fab-btn" onclick="openQuickAdd()" title="Cmd+K">⚡</button>
+    </div>
+  </div>`;
+}
+
 function renderAuthGate(){
   return `<section class="auth-gate hidden" id="auth-gate" aria-hidden="true">
     <div class="auth-gate-shell">
       <div class="auth-gate-hero">
-        <div class="auth-gate-brand">Sama OS</div>
+        <div class="auth-gate-brand">Personal trackers</div>
         <h1 class="auth-gate-title">نظامك الشخصي للتركيز والتنظيم</h1>
         <p class="auth-gate-copy">مساحة واحدة للمهام والعادات والمصاريف واليوميات، بهدوء ووضوح ومن غير أي تشتيت قبل تسجيل الدخول.</p>
       </div>
@@ -123,7 +291,7 @@ function renderAuthGate(){
 function renderDesktopSidebar(){
   return `<nav class="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-mark">Sama OS</div>
+    <div class="logo-mark">Personal trackers</div>
     <div class="logo-sub">نظامك الشخصي</div>
   </div>
   <div class="sidebar-date">
@@ -158,7 +326,7 @@ function renderMobileShell(){
   return `<div class="mobile-shell">
     <div class="mobile-topbar">
       <div>
-        <div class="mobile-brand">Sama OS</div>
+        <div class="mobile-brand">Personal trackers</div>
         <div class="mobile-caption">نظامك الشخصي</div>
       </div>
       <div class="mobile-side-meta">
@@ -225,67 +393,10 @@ function renderQuickActions(){
 
 function renderHomePage(){
   return `<div class="page active" id="page-home">
-  <div class="home-layout">
-    <div class="page-tools dashboard-top-tools">
-        <button class="btn btn-ghost btn-sm" onclick="exportExpensesCsv()">📤 تصدير CSV</button>
-        <div class="live-status"><span class="live-dot"></span><span style="font-size:11px;color:var(--text2)">متصل</span></div>
-    </div>
-    
-    ${renderDailyBrief()}
-    
-    <div class="section-label stagger-item">الوصول السريع</div>
-    ${renderQuickActions()}
-
-    <div class="section-label stagger-item">لوحة حياتك</div>
-    <div class="life-board stagger-item">
-      <div class="life-card" onclick="goPage('habits')">
-        <div class="lc-icon">😴</div>
-        <div class="lc-info">
-          <div class="lc-name">النوم</div>
-          <div class="lc-status lc-warn" id="lc-sleep">غير منتظم</div>
-        </div>
-      </div>
-      <div class="life-card" onclick="goPage('habits')">
-        <div class="lc-icon">🦷</div>
-        <div class="lc-info">
-          <div class="lc-name">الدراسة</div>
-          <div class="lc-status lc-warn" id="lc-study">ضعيفة</div>
-        </div>
-      </div>
-      <div class="life-card" onclick="goPage('money')">
-        <div class="lc-icon">💰</div>
-        <div class="lc-info">
-          <div class="lc-name">الفلوس</div>
-          <div class="lc-status lc-neutral" id="lc-money">ابدأي</div>
-        </div>
-      </div>
-      <div class="life-card" onclick="goPage('tasks')">
-        <div class="lc-icon">✅</div>
-        <div class="lc-info">
-          <div class="lc-name">المهام</div>
-          <div class="lc-status lc-neutral" id="lc-tasks">رتبيها</div>
-        </div>
-      </div>
-      <div class="life-card" onclick="goPage('journal')">
-        <div class="lc-icon">📝</div>
-        <div class="lc-info">
-          <div class="lc-name">اليومية</div>
-          <div class="lc-status lc-warn" id="lc-journal">لم تُكتب</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="section-label stagger-item">الإحصائيات الأساسية</div>
-    <div class="stats-row stagger-item">
-      <div class="stat-card"><div class="stat-label">أعلى سلسلة</div><div class="stat-value" id="stat-streak">٠</div><div class="stat-change stat-up">يوم متواصل</div></div>
-      <div class="stat-card"><div class="stat-label">إجمالي التحويش</div><div class="stat-value" id="stat-savings">٠</div><div class="stat-change stat-neutral">روبل</div></div>
-      <div class="stat-card"><div class="stat-label">عادات اليوم</div><div class="stat-value" id="stat-habits">٠٪</div><div class="stat-change stat-neutral" id="stat-habits-lbl">من الأهداف</div></div>
-      <div class="stat-card"><div class="stat-label">مشاكل محلولة</div><div class="stat-value" id="stat-solved">٠</div><div class="stat-change stat-neutral">مشكلة</div></div>
-    </div>
-  </div>
-</div>`;
+    ${renderRedesignedDashboard()}
+  </div>`;
 }
-
+    
 function renderTasksPage(){
   return `<div class="page" id="page-tasks">
   <div class="page-header">
@@ -651,7 +762,7 @@ function renderGuidePage(){
   return `<div class="page" id="page-guide">
   <div class="page-header">
     <div class="page-title">دليل التطور 💡</div>
-    <div class="page-subtitle">كيف تستخدمين Sama OS لتحقيق أقصى استفادة وبناء حياة متوازنة؟</div>
+    <div class="page-subtitle">كيف تستخدمين Personal trackers لتحقيق أقصى استفادة وبناء حياة متوازنة؟</div>
   </div>
   <div class="tips-list">
     
@@ -801,7 +912,7 @@ function renderAdminPage(){
     <div class="page-header-row">
       <div>
         <div class="page-title">لوحة التحكم</div>
-        <div class="page-subtitle">متابعة المستخدمين وبياناتهم من داخل Sama OS</div>
+        <div class="page-subtitle">متابعة المستخدمين وبياناتهم من داخل Personal trackers</div>
       </div>
       <div class="page-tools">
         <button class="btn btn-ghost btn-sm" type="button" onclick="refreshAdminDashboard()">تحديث</button>
@@ -854,8 +965,22 @@ function renderPages(){
   ].join('');
 }
 
+function renderQuickAddModal(){
+  return `<div class="quick-add-modal" id="quick-add-modal" style="display:none;">
+  <div class="quick-add-container">
+    <input id="quick-add-input" type="text" placeholder="أضيفي مهمة أو عادة..." class="quick-add-input" 
+           onkeydown="if(event.key==='Enter')submitQuickAdd();if(event.key==='Escape')closeQuickAdd();">
+    <div class="quick-add-hints">
+      <div class="hint">💡 ابدأي بـ # للعادات</div>
+      <div class="hint">📝 أو اكتبي المهمة مباشرة</div>
+      <div class="hint">ESC للإغلاق</div>
+    </div>
+  </div>
+</div>`;
+}
+
 function renderShellOverlays(){
-  return `<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  return `${renderQuickAddModal()}<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
   <div class="modal" id="modal-box">
     <div class="modal-title" id="modal-title"></div>
     <div id="modal-body"></div>
@@ -867,8 +992,8 @@ function renderShellOverlays(){
 <div class="loading-overlay" id="app-loading">
   <div class="loading-box">
     <div class="loading-spinner"></div>
-    <div class="loading-title">جاري تجهيز Sama OS...</div>
-    <div class="loading-sub">Checking your session and syncing your data</div>
+    <div class="loading-title">جاري تجهيز Personal trackers...</div>
+    <div class="loading-sub">Checking your session...</div>
   </div>
 </div>`;
 }
@@ -876,5 +1001,15 @@ function renderShellOverlays(){
 function renderAppShell(){
   const root=document.getElementById('app-root');
   if(!root)return;
+  
+  const currentUser=typeof getCurrentFirebaseUser==='function'?getCurrentFirebaseUser():null;
+  const isAuthenticated=Boolean(currentUser&&currentUser.uid);
+  const isOnboarding=isAuthenticated&&S.onboarding&&!S.onboarding.completed&&!S.onboarding.skipped;
+  
+  if(isOnboarding){
+    root.innerHTML=`${renderOnboardingFlow()}${renderShellOverlays()}`;
+    return;
+  }
+  
   root.innerHTML=`${renderAuthGate()}<div class="app-shell hidden" id="app-shell" aria-hidden="true"><div class="app">${renderDesktopSidebar()}<main class="main">${renderMobileShell()}${renderPages()}</main></div></div>${renderShellOverlays()}`;
 }

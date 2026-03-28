@@ -80,6 +80,11 @@ function normalizeStateShape(source){
     budgets:{},
     xp:Math.max(0,Math.round(Number(src.xp)||0)),
     level:1,
+    onboarding:{
+      completed:Boolean(src.onboarding&&src.onboarding.completed),
+      step:Number(src.onboarding&&src.onboarding.step)||0,
+      skipped:Boolean(src.onboarding&&src.onboarding.skipped),
+    },
     weeklyChallenge:src.weeklyChallenge?String(src.weeklyChallenge):null,
     weeklyChallengeDone:Boolean(src.weeklyChallengeDone),
     weeklyChallengeProgress:Math.max(0,Number(src.weeklyChallengeProgress)||0),
@@ -216,6 +221,11 @@ function getPersistenceUid(){
 }
 
 async function load(){
+  return loadWithOptions();
+}
+
+async function loadWithOptions(options={}){
+  const backgroundRemote=Boolean(options&&options.backgroundRemote);
   const cache=loadCache();
   const cachedState=normalizeStateShape(cache||createDefaultState());
   S=cachedState;
@@ -223,24 +233,38 @@ async function load(){
   const uid=getPersistenceUid();
   if(!uid||typeof loadFromFirebase!=='function'){
     setSyncIndicator('offline');
-    return;
+    return {remotePromise:null};
   }
-  try{
+  const remoteSyncPromise=(async()=>{
     setSyncIndicator('syncing');
     const remoteState=await loadFromFirebase(uid,cachedState);
+    if(getPersistenceUid()!==uid)return null;
     const bootstrapRemote=!remoteState;
     S=bootstrapRemote?createBootstrapState(cachedState):normalizeStateShape(remoteState);
     saveCache();
     if(bootstrapRemote){
       await saveToFirebase(uid,S);
+      if(getPersistenceUid()!==uid)return null;
       saveCache();
     }
     setSyncIndicator('synced');
-  }catch(err){
+    window.dispatchEvent(new CustomEvent('sama-state-synced',{detail:{uid}}));
+    return S;
+  })().catch(err=>{
     console.warn('Firebase load failed, using cache fallback.',err);
-    S=cachedState;
-    setSyncIndicator('offline');
+    if(getPersistenceUid()===uid){
+      S=cachedState;
+      setSyncIndicator('offline');
+    }
+    return null;
+  });
+
+  if(backgroundRemote){
+    return {remotePromise:remoteSyncPromise};
   }
+
+  await remoteSyncPromise;
+  return {remotePromise:null};
 }
 function save(options={}){
   S=normalizeStateShape(S);
