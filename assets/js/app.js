@@ -5,6 +5,18 @@ function rerenderOnboardingFlow(){
 
 function showShellAfterOnboarding(){
   renderAppShell();
+  if(typeof setAppAccessState==='function'){
+    setAppAccessState(true);
+  }
+  if(typeof setLoadingVisible==='function'){
+    setLoadingVisible(false);
+  }
+  if(typeof renderActivePage==='function'){
+    renderActivePage();
+  }
+  if(typeof goPage==='function'){
+    goPage('home');
+  }
   if(typeof refreshAuthUi==='function'){
     refreshAuthUi();
   }
@@ -331,6 +343,7 @@ document.addEventListener('keydown',(e)=>{
 
 async function initApp(){
   renderAppShell();
+  setLoadingVisible(true);
   updateClock();
   setInterval(updateClock,30000);
   if(typeof waitForFirebaseAuthReady==='function'){

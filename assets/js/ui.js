@@ -432,18 +432,78 @@ async function handlePasswordReset(trigger){
 }
 
 function syncPageNav(id){
-  document.querySelectorAll('[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===id));
+  const mobileCorePages=new Set(['home','tasks','habits','money']);
+  document.querySelectorAll('[data-page]').forEach(el=>{
+    const page=el.dataset.page;
+    const isMobileNav=el.classList.contains('mobile-nav-btn');
+    let isActive=page===id;
+    if(isMobileNav&&page==='more'&&!mobileCorePages.has(id)){
+      isActive=true;
+    }
+    el.classList.toggle('active',isActive);
+  });
 }
 
-function goPage(id){
+let samaHistoryPrimed=false;
+let samaHandlingPopState=false;
+let samaLastHistoryPage='';
+
+function syncPageHistory(pageId,options={}){
+  if(!pageId||typeof window==='undefined'||!window.history)return;
+  const replace=Boolean(options&&options.replaceHistory);
+  const fromHistory=Boolean(options&&options.fromHistory);
+  if(fromHistory)return;
+  const state={...(window.history.state||{}),samaApp:true,samaPage:pageId};
+  if(replace||!samaHistoryPrimed){
+    window.history.replaceState(state,'',window.location.pathname+window.location.search);
+    samaHistoryPrimed=true;
+    samaLastHistoryPage=pageId;
+    return;
+  }
+  if(samaLastHistoryPage===pageId)return;
+  window.history.pushState(state,'',window.location.pathname+window.location.search);
+  samaLastHistoryPage=pageId;
+}
+
+function getMobileMoreItems(){
+  const items=Array.isArray(MOBILE_NAV_ITEMS)?MOBILE_NAV_ITEMS:[];
+  return items.filter(item=>{
+    if(!item||!item.page)return false;
+    if(['home','tasks','habits','money','more'].includes(item.page))return false;
+    if(item.adminOnly&&typeof hasAdminAccess==='function'&&!hasAdminAccess())return false;
+    return true;
+  });
+}
+
+function handleMobileMoreNav(page){
+  closeModal();
+  goPage(page);
+}
+
+function openSidebarMobile(){
+  const items=getMobileMoreItems();
+  const bodyHtml=items.length
+    ? `<div class="mobile-more-sheet">${items.map(item=>`
+        <button class="mobile-more-btn" type="button" onclick="handleMobileMoreNav('${item.page}')">
+          <span class="mobile-more-icon">${item.icon}</span>
+          <span class="mobile-more-label">${item.label}</span>
+        </button>
+      `).join('')}</div>`
+    : '<div class="mobile-more-empty">لا توجد أقسام إضافية الآن.</div>';
+  openModal('المزيد',bodyHtml,[{text:'إغلاق',fn:'closeModal',primary:false}]);
+}
+
+function goPage(id,options={}){
   if(id==='admin'&&typeof hasAdminAccess==='function'&&!hasAdminAccess()){
     id='home';
   }
   const page=document.getElementById('page-'+id);
   if(!page)return;
+  closeModal();
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   page.classList.add('active');
   syncPageNav(id);
+  syncPageHistory(id,options);
   const main=document.querySelector('.main');
   if(main)main.scrollTop=0;
   if(id==='tasks')renderTasks();
@@ -471,10 +531,16 @@ function setEnergy(v,persist=true){
   const existing=S.energyHistory.find(entry=>entry.date===today);
   if(existing)existing.value=energyValue;
   else S.energyHistory.unshift({date:today,value:energyValue});
-  const energyNum=document.getElementById('ew-num');
   const energyDesc=document.getElementById('ew-desc');
   const mobileEnergy=document.getElementById('m-energy-mini');
-  if(energyNum)energyNum.textContent=toAr(energyValue);
+  document.querySelectorAll('#ew-num, .energy-thumb-val').forEach(el=>{
+    el.textContent=toAr(energyValue);
+  });
+  document.querySelectorAll('#energy-rng, #energy-dashboard, .energy-slider-mini').forEach(input=>{
+    if(input&&String(input.value)!==String(energyValue)){
+      input.value=String(energyValue);
+    }
+  });
   if(energyDesc)energyDesc.textContent=ENERGY_DESC[energyValue]||'';
   if(mobileEnergy)mobileEnergy.textContent=`${toAr(energyValue)}/١٠`;
   const energyChip=document.getElementById('journal-energy-chip');
@@ -585,7 +651,8 @@ document.addEventListener('touchend', () => {
 
 // Enhance existing goPage() function for fluid transitions
 const originalGoPage = window.goPage || goPage; 
-window.goPage = (pageId) => {
+window.goPage = (pageId,options={}) => {
+  const navOptions=options&&typeof options==='object'?options:{};
   let resolvedPageId = pageId;
   if(resolvedPageId === 'admin' && typeof hasAdminAccess === 'function' && !hasAdminAccess()){
     resolvedPageId = 'home';
@@ -599,7 +666,7 @@ window.goPage = (pageId) => {
     setTimeout(() => {
       activePage.classList.remove('active', 'page-exit');
       targetPage.classList.add('active', 'page-enter');
-      originalGoPage(resolvedPageId); // actually render new content
+      originalGoPage(resolvedPageId,navOptions); // actually render new content
       
       const staggerItems = targetPage.querySelectorAll('.card, .mvd-task, .stat-card, .goal-card, .problem-card, .tip-card');
       staggerItems.forEach((el, i) => {
@@ -632,7 +699,20 @@ window.goPage = (pageId) => {
       setTimeout(() => targetPage.classList.remove('page-enter'), 300);
     }, 150);
   } else if (!activePage || activePage === targetPage) {
-     originalGoPage(resolvedPageId);
+     originalGoPage(resolvedPageId,navOptions);
   }
 };
 goPage = window.goPage;
+
+window.addEventListener('popstate',(event)=>{
+  const nextPage=event&&event.state?event.state.samaPage:null;
+  const currentUser=typeof getCurrentFirebaseUser==='function'?getCurrentFirebaseUser():null;
+  if(!nextPage||!currentUser||!currentUser.uid)return;
+  samaHandlingPopState=true;
+  samaLastHistoryPage=nextPage;
+  try{
+    window.goPage(nextPage,{fromHistory:true});
+  }finally{
+    window.setTimeout(()=>{samaHandlingPopState=false;},0);
+  }
+});

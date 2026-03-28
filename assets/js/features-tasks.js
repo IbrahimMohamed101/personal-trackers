@@ -108,6 +108,7 @@ function addTask(){
   toast('تمت إضافة المهمة');
 }
 
+let taskSaveTimer = null;
 function toggleTaskDone(id,checked){
   const task=(S.tasks||[]).find(item=>Number(item.id)===Number(id));
   if(!task)return;
@@ -119,13 +120,22 @@ function toggleTaskDone(id,checked){
   renderTasks();
   renderAchievements();
   updateLifeCards();
-  save();
+  if(taskSaveTimer) clearTimeout(taskSaveTimer);
+  taskSaveTimer = setTimeout(() => save(), 600);
 }
 
 function deleteTask(id){
+  openModal(lang()==='en'?'Delete Task':'حذف المهمة',
+    '<p>'+(lang()==='en'?'Are you sure you want to delete this task?':'هل أنتِ متأكدة من حذف هذه المهمة؟')+'</p>',
+    [{text:lang()==='en'?'Delete':'حذف', primary:true, fn:`confirmDeleteTask(${id})`},
+     {text:lang()==='en'?'Cancel':'إلغاء', fn:'closeModal'}]);
+}
+
+window.confirmDeleteTask = function(id){
   S.tasks=(S.tasks||[]).filter(task=>Number(task.id)!==Number(id));
   renderTasks();
   updateLifeCards();
   save();
-  toast('تم حذف المهمة');
+  closeModal();
+  toast(lang()==='en'?'Task deleted':'تم حذف المهمة');
 }

@@ -172,7 +172,13 @@ function renderMoney(){
 function deleteExpense(id){
   const expense=S.expenses.find(item=>Number(item.id)===Number(id));
   if(!expense)return;
-  if(!window.confirm(lang()==='en'?'Delete this expense?':'حذف هذا المصروف؟'))return;
+  openModal(lang()==='en'?'Delete Expense':'حذف المصروف',
+    '<p>'+(lang()==='en'?'Are you sure you want to delete this expense?':'هل أنتِ متأكدة من حذف هذا المصروف؟')+'</p>',
+    [{text:lang()==='en'?'Delete':'حذف', primary:true, fn:`confirmDeleteExpense(${id})`},
+     {text:lang()==='en'?'Cancel':'إلغاء', fn:'closeModal'}]);
+}
+
+window.confirmDeleteExpense = function(id) {
   S.expenses=S.expenses.filter(item=>Number(item.id)!==Number(id));
   renderMoney();
   renderStats();
@@ -180,6 +186,7 @@ function deleteExpense(id){
   renderAchievements();
   updateWeeklyChallengeProgress();
   save();
+  closeModal();
   toast(lang()==='en'?'Expense deleted':'تم حذف المصروف');
 }
 
@@ -252,5 +259,8 @@ function confirmQuickExpense(){
   updateLifeCards();
   save();
   closeModal();
+  document.getElementById('modal-m-amount').value = '';
+  document.getElementById('modal-m-note').value = '';
+  document.getElementById('modal-m-cat').selectedIndex = 0;
   toast(cat==='ادخار'?'💚 تم إضافة الادخار!':isIncome(cat)?'💰 تم إضافة الدخل!':'✓ تم تسجيل المصروف');
 }

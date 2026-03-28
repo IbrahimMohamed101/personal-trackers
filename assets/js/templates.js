@@ -102,7 +102,7 @@ function renderAuthPanel(variant='sidebar'){
 function renderOnboardingFlow(){
   const step=S.onboarding?.step||0;
   if(step===0){
-    return `<section class="onboarding" id="onboarding-flow" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,var(--surface) 0%,var(--background) 100%);">
+    return `<section class="onboarding" id="onboarding-flow" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,var(--bg1) 0%,var(--bg0) 100%);">
       <div class="onboarding-splash" style="text-align:center;max-width:400px;padding:40px 20px;">
         <div style="font-size:80px;margin-bottom:20px;">🌟</div>
         <h1 style="font-size:32px;margin-bottom:10px;color:var(--text1);">Personal Trackers</h1>
@@ -117,14 +117,14 @@ function renderOnboardingFlow(){
   }
   
   if(step===1){
-    return `<section class="onboarding" id="onboarding-flow" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--background);">
+    return `<section class="onboarding" id="onboarding-flow" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg0);">
       <div class="onboarding-card" style="max-width:500px;width:100%;padding:40px;margin:20px;">
         <div style="text-align:center;margin-bottom:30px;">
           <div style="font-size:48px;margin-bottom:10px;">🌱</div>
           <h2 style="font-size:24px;color:var(--text1);">أول عادة لك</h2>
           <p style="color:var(--text3);margin-top:8px;">ما هي الشيء الذي تريدين فعله يومياً؟</p>
         </div>
-        <div style="background:var(--surface);padding:20px;border-radius:12px;margin-bottom:20px;">
+        <div style="background:var(--bg1);padding:20px;border-radius:12px;margin-bottom:20px;">
           <input class="inp" id="onboard-habit-input" type="text" placeholder="مثلاً: المشي الصباحي، قراءة الكتاب..." style="width:100%;margin-bottom:10px;font-size:14px;"  />
           <div style="font-size:12px;color:var(--text3);line-height:1.6;">
             💡 <strong>الخيارات الشهيرة:</strong> 🚴 رياضة • 📚 قراءة • 🧘 تأمل • 💧 شرب الماء
@@ -138,16 +138,16 @@ function renderOnboardingFlow(){
   }
   
   if(step===2){
-    return `<section class="onboarding" id="onboarding-flow" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--background);">
+    return `<section class="onboarding" id="onboarding-flow" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg0);">
       <div class="onboarding-card" style="max-width:500px;width:100%;padding:40px;margin:20px;">
         <div style="text-align:center;margin-bottom:30px;">
           <div style="font-size:48px;margin-bottom:10px;">✅</div>
           <h2 style="font-size:24px;color:var(--text1);">أول مهمة لك</h2>
           <p style="color:var(--text3);margin-top:8px;">ما الذي يجب أن تنجزيه اليوم؟</p>
         </div>
-        <div style="background:var(--surface);padding:20px;border-radius:12px;margin-bottom:20px;">
+        <div style="background:var(--bg1);padding:20px;border-radius:12px;margin-bottom:20px;">
           <input class="inp" id="onboard-task-input" type="text" placeholder="مثلاً: إنهاء التقرير، مكالمة المدير..." style="width:100%;margin-bottom:15px;font-size:14px;" />
-          <select class="inp" id="onboard-task-priority" style="width:100%;margin-bottom:15px;padding:10px;border-radius:8px;background:var(--background);color:var(--text1);border:1px solid var(--text3);">
+          <select class="inp" id="onboard-task-priority" style="width:100%;margin-bottom:15px;padding:10px;border-radius:8px;background:var(--bg0);color:var(--text1);border:1px solid var(--text3);">
             <option value="normal">عادي</option>
             <option value="important">مهم</option>
             <option value="urgent">عاجل</option>
@@ -164,14 +164,14 @@ function renderOnboardingFlow(){
   }
   
   if(step===3){
-    return `<section class="onboarding" id="onboarding-flow" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--background);">
+    return `<section class="onboarding" id="onboarding-flow" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg0);">
       <div class="onboarding-card" style="max-width:500px;width:100%;padding:40px;margin:20px;">
         <div style="text-align:center;margin-bottom:30px;">
           <div style="font-size:48px;margin-bottom:10px;">⚡</div>
           <h2 style="font-size:24px;color:var(--text1);">كيف طاقتك اليوم؟</h2>
           <p style="color:var(--text3);margin-top:8px;">هذا مؤشر لمدى استعدادك</p>
         </div>
-        <div style="background:var(--surface);padding:24px;border-radius:12px;margin-bottom:20px;text-align:center;">
+        <div style="background:var(--bg1);padding:24px;border-radius:12px;margin-bottom:20px;text-align:center;">
           <div style="font-size:32px;letter-spacing:8px;margin-bottom:20px;">😔 😕 😐 🙂 😊 😄</div>
           <input type="range" min="1" max="10" value="5" id="onboard-energy" style="width:100%;height:6px;cursor:pointer;" />
           <div style="margin-top:15px;color:var(--gold);font-size:18px;font-weight:bold;" id="onboard-energy-display">طاقة متوسطة — يمكن التقدم</div>
@@ -185,12 +185,14 @@ function renderOnboardingFlow(){
   return '';
 }
 
-function renderRedesignedDashboard(){
+function renderMobileDashboard(){
   const today=todayKey();
-  const todayTasks=(S.tasks||[]).filter(t=>t.date===today).sort((a,b)=>a.done?1:-1).slice(0,3);
-  const topHabits=(S.habits||[]).slice(0,3);
+  const todayTasks=(S.tasks||[]).filter(t=>t.date===today).sort((a,b)=>a.done?1:-1).slice(0,5);
+  const topHabits=(S.habits||[]).slice(0,4);
   const activeHabits=topHabits.filter(h=>!h.done.includes(today));
   const completedToday=((S.tasks||[]).filter(t=>t.date===today&&t.done)||[]).length;
+  const totalTodayTasks=(S.tasks||[]).filter(t=>t.date===today).length;
+  const savings=getSavingsTotal?getSavingsTotal():0;
   const habitRateThisWeek=topHabits.length?Math.round(topHabits.reduce((sum,h)=>{
     const weekStart=challengeWeekStartKey(today);
     let count=0;
@@ -204,71 +206,184 @@ function renderRedesignedDashboard(){
   const hour=new Date().getHours();
   const greeting=hour<5?'أهلاً بكِ':hour<12?'صباح الخير':hour<17?'مساء النور':'مساء الخير';
   const currentUser=typeof getCurrentFirebaseUser==='function'?getCurrentFirebaseUser():null;
-  const userName=currentUser&&currentUser.displayName?currentUser.displayName:'الصديقة';
+  const userName=currentUser&&currentUser.displayName?currentUser.displayName:'';
+
+  return `<div class="home-layout">
+    <!-- Daily Brief Hero (Merged: Brief + Energy + Stats) -->
+    <div class="daily-brief-hero">
+      <div class="db-hero-top">
+        <div class="db-greeting">
+          <h2 id="home-greeting"><span class="fw-normal">${greeting}</span>${userName?'، <strong class="gold-text">'+escapeHtml(userName)+'</strong>':''} ✨</h2>
+          <p id="home-sub">${todayStr()} • ${timeStr()}</p>
+        </div>
+        <div class="db-hero-energy">
+          <div class="energy-thumb-val">${toAr(S.energy)}</div>
+          <input type="range" min="1" max="10" value="${S.energy}" class="energy-slider-mini" id="energy-rng" oninput="setEnergy(this.value)">
+        </div>
+      </div>
+      
+      <div class="db-hero-xp">
+        <div class="xp-row-mini">
+          <span class="xp-level-badge">المستوى ١</span>
+          <span class="xp-pct-mini">٠/٢٠٠ XP</span>
+        </div>
+        <div class="prog-wrap"><div class="prog-fill prog-gold" id="home-xp-bar" style="width:0%"></div></div>
+      </div>
+
+      <div class="db-stats-merged">
+        <div class="db-stat-pill">📋 ${toAr(completedToday)}/${toAr(totalTodayTasks)} مهام</div>
+        <div class="db-stat-pill">🔥 ${toAr(habitRateThisWeek)}٪ عادات</div>
+        <div class="db-stat-pill">💰 ${toArFull(savings)} ₽</div>
+      </div>
+    </div>
+
+    <!-- Quick Actions Pill Strip -->
+    <div class="quick-actions-strip">
+      <button class="qa-pill" onclick="openExpenseModal()">💸 مصروف</button>
+      <button class="qa-pill" onclick="goPage('journal')">📝 يومية</button>
+      <button class="qa-pill" onclick="goPage('tasks')">✅ مهمة</button>
+      <button class="qa-pill" onclick="goPage('pomodoro')">⏱️ تركيز</button>
+    </div>
+
+    <!-- Today's Focus (Unified Tasks + Active Habits) -->
+    <div class="card dash-card card-focus-feed">
+      <div class="dash-card-header">
+        <div class="dash-card-title">🎯 تركيز اليوم</div>
+        <div class="chip chip-gold">${toAr(totalTodayTasks + activeHabits.length)} متبقية</div>
+      </div>
+      
+      <div class="focus-feed-list">
+        ${todayTasks.length || activeHabits.length ? `
+          
+          ${activeHabits.map(habit=>{
+            const streak=calcMaxStreak(habit.done);
+            return `<div class="focus-row habit-row" onclick="markHabitDoneFromDashboard('${habit.id}')">
+              <div class="focus-icon">◎</div>
+              <div class="focus-content">
+                <div class="focus-title">${escapeHtml(habit.name)}</div>
+                <div class="focus-meta gold-text">🔥 ${toAr(streak)} يوم</div>
+              </div>
+              <div class="focus-action">إكمال</div>
+            </div>`;
+          }).join('')}
+
+          ${todayTasks.map(task=>`
+            <label class="focus-row task-row ${task.done?'done':''}">
+              <div class="focus-checkbox">
+                <input type="checkbox" ${task.done?'checked':''} onchange="toggleTaskDone(${task.id},this.checked)">
+              </div>
+              <div class="focus-content">
+                <div class="focus-title">${escapeHtml(task.title)}</div>
+              </div>
+            </label>
+          `).join('')}
+          
+        ` : '<div class="dash-empty-compact dash-empty-success" onclick="goPage(\'tasks\')">✓ يومك نظيف بالكامل! + أضيفي مهمة</div>'}
+      </div>
+    </div>
+
+  </div>`;
+}
+
+function renderDesktopDashboard(){
+  const today=todayKey();
+  const todayTasks=(S.tasks||[]).filter(t=>t.date===today).sort((a,b)=>a.done?1:-1).slice(0,5);
+  const topHabits=(S.habits||[]).slice(0,4);
+  const activeHabits=topHabits.filter(h=>!h.done.includes(today));
+  const completedToday=((S.tasks||[]).filter(t=>t.date===today&&t.done)||[]).length;
+  const totalTodayTasks=(S.tasks||[]).filter(t=>t.date===today).length;
+  const savings=getSavingsTotal?getSavingsTotal():0;
+  const habitRateThisWeek=topHabits.length?Math.round(topHabits.reduce((sum,h)=>{
+    const weekStart=challengeWeekStartKey(today);
+    let count=0;
+    for(let i=0;i<7;i++){
+      const date=shiftDateKey(weekStart,i);
+      if(h.done.includes(date))count++;
+    }
+    return sum+count/7;
+  },0)/topHabits.length*100):0;
   
-  return `<div style="padding:20px;max-width:900px;margin:0 auto;">
-    <div style="color:var(--text3);margin-bottom:30px;font-size:13px;">
-      ${greeting}، يا ${escapeHtml(userName)} • ${timeStr()}
-    </div>
-    
-    <div class="card-redesign" style="background:var(--surface);padding:20px;border-radius:12px;margin-bottom:20px;border-left:4px solid var(--gold);">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
-        <h3 style="color:var(--text1);font-size:16px;margin:0;">⚡ طاقتك اليوم</h3>
-        <span style="color:var(--gold);font-weight:bold;font-size:18px;">${S.energy}/10</span>
-      </div>
-      <div style="background:var(--background);padding:12px;border-radius:8px;margin-bottom:8px;">
-        <input type="range" min="1" max="10" value="${S.energy}" id="energy-dashboard" oninput="setEnergy(this.value)" style="width:100%;height:6px;cursor:pointer;" />
-      </div>
-      <div style="font-size:12px;color:var(--text3);">${ENERGY_DESC[S.energy]||'طاقة متوسطة'}</div>
-    </div>
-    
-    <div class="card-redesign" style="background:var(--surface);padding:20px;border-radius:12px;margin-bottom:20px;border-left:4px solid var(--amber);">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
-        <h3 style="color:var(--text1);font-size:16px;margin:0;">📋 أولوياتك اليوم</h3>
-        <span style="background:var(--background);color:var(--gold);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:bold;">${todayTasks.length} مهام</span>
-      </div>
-      ${todayTasks.length?todayTasks.map((task,i)=>`<div style="background:var(--background);padding:12px;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">
-        <input type="checkbox" ${task.done?'checked':''} onchange="toggleTaskDone(${task.id},this.checked)" style="cursor:pointer;width:20px;height:20px;" />
-        <div style="flex:1;">
-          <div style="color:var(--text1);font-size:14px;${task.done?'opacity:0.5;text-decoration:line-through':''}">${escapeHtml(task.title)}</div>
+  const hour=new Date().getHours();
+  const greeting=hour<5?'أهلاً بكِ':hour<12?'صباح الخير':hour<17?'مساء النور':'مساء الخير';
+  const currentUser=typeof getCurrentFirebaseUser==='function'?getCurrentFirebaseUser():null;
+  const userName=currentUser&&currentUser.displayName?currentUser.displayName:'';
+
+  return `<div class="home-layout">
+    <!-- Daily Brief (Desktop Grid) -->
+    <div class="daily-brief">
+      <div class="db-main">
+        <div class="db-greeting">
+          <h2 id="home-greeting-desktop">${greeting}${userName?'، '+escapeHtml(userName):''} ✨</h2>
+          <p id="home-sub-desktop">${todayStr()} • ${timeStr()}</p>
         </div>
-        <span style="color:var(--text3);font-size:12px;">${task.time||'09:00'}</span>
-      </div>`).join(''):'<div style="color:var(--text3);padding:20px;text-align:center;font-size:14px;">✅ يومك نظيف — أضيفي مهمة جديدة</div>'}
-    </div>
-    
-    <div class="card-redesign" style="background:var(--surface);padding:20px;border-radius:12px;margin-bottom:20px;border-left:4px solid var(--green);">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;">
-        <h3 style="color:var(--text1);font-size:16px;margin:0;">🌱 عاداتك النشطة</h3>
       </div>
-      ${activeHabits.length?activeHabits.map(habit=>{
-        const streak=calcMaxStreak(habit.done);
-        return `<div style="background:var(--background);padding:12px;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="markHabitDoneFromDashboard('${habit.id}')">
-          <div style="flex:1;">
-            <div style="color:var(--text1);font-size:14px;">${escapeHtml(habit.name)}</div>
-            <div style="font-size:11px;color:var(--gold);">🔥 ${streak} يوم</div>
+      <div class="db-stats-mini">
+        <div class="db-stat-item"><span class="db-stat-icon">✅</span> <span>${toAr(completedToday)}/${toAr(totalTodayTasks)}</span> مهام</div>
+        <div class="db-stat-item"><span class="db-stat-icon">🔥</span> <span>${toAr(habitRateThisWeek)}٪</span> عادات</div>
+        <div class="db-stat-item"><span class="db-stat-icon">⚡</span> <span>${toAr(S.energy)}/١٠</span></div>
+        <div class="db-stat-item"><span class="db-stat-icon">💰</span> <span>${toArFull(savings)}</span> ₽</div>
+      </div>
+    </div>
+
+    <!-- Quick Actions (Desktop Grid) -->
+    <div class="quick-actions">
+      <button class="qa-btn" onclick="goPage('tasks')"><div class="qa-icon">✅</div><span>المهام</span></button>
+      <button class="qa-btn" onclick="openExpenseModal()"><div class="qa-icon">💸</div><span>مصروف</span></button>
+      <button class="qa-btn" onclick="goPage('journal')"><div class="qa-icon">📝</div><span>يومية</span></button>
+      <button class="qa-btn" onclick="goPage('pomodoro')"><div class="qa-icon">⏱️</div><span>تركيز</span></button>
+    </div>
+
+    <!-- Layout Grid for Desktop -->
+    <div class="desktop-dashboard-grid">
+      <!-- Energy -->
+      <div class="card dash-card">
+        <div class="dash-card-header">
+          <div class="dash-card-title">⚡ الطاقة</div>
+          <div class="dash-card-value gold-text" id="ew-num">${toAr(S.energy)}</div>
+        </div>
+        <div class="ew-track"><input type="range" min="1" max="10" value="${S.energy}" id="energy-dashboard" oninput="setEnergy(this.value)"></div>
+        <div class="dash-card-sub" id="ew-desc">${ENERGY_DESC[S.energy]||'طاقة متوسطة'}</div>
+      </div>
+
+      <div class="desktop-split-row">
+        <!-- Today Tasks -->
+        <div class="card dash-card">
+          <div class="dash-card-header">
+            <div class="dash-card-title">📋 أولوياتك اليوم</div>
+            <div class="chip chip-gold">${toAr(totalTodayTasks)} مهام</div>
           </div>
-          <span style="background:var(--gold);color:var(--background);padding:4px 8px;border-radius:6px;font-size:11px;font-weight:bold;">اضغط لإكمال</span>
-        </div>`;
-      }).join(''):'<div style="color:var(--text3);padding:20px;text-align:center;font-size:14px;">أضيفي أول عادة لك</div>'}
-    </div>
-    
-    <div class="card-redesign" style="background:linear-gradient(135deg,var(--green) 0%,var(--emerald) 100%);color:white;padding:20px;border-radius:12px;margin-bottom:20px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div>
-          <div style="font-size:14px;opacity:0.9;">🏆 إحصائيات الأسبوع</div>
-          <div style="font-size:24px;font-weight:bold;margin-top:5px;">${habitRateThisWeek}% إنجاز عادات</div>
-          <div style="font-size:12px;opacity:0.8;margin-top:5px;">✅ ${completedToday} مهام منجزة اليوم</div>
+          ${todayTasks.length?todayTasks.map(task=>`<div class="dash-task-row ${task.done?'done':''}">
+            <input type="checkbox" ${task.done?'checked':''} onchange="toggleTaskDone(${task.id},this.checked)">
+            <span class="dash-task-text">${escapeHtml(task.title)}</span>
+          </div>`).join(''):'<div class="dash-empty-compact" onclick="goPage(\'tasks\')">+ أضيفي أول مهمة لليوم</div>'}
+          <button class="btn btn-ghost btn-sm" onclick="goPage('tasks')" style="width:100%;margin-top:8px;justify-content:center">عرض كل المهام ←</button>
+        </div>
+
+        <!-- Active Habits -->
+        <div class="card dash-card">
+          <div class="dash-card-header">
+            <div class="dash-card-title">🌱 العادات النشطة</div>
+            <div class="chip chip-green">${toAr(activeHabits.length)} متبقية</div>
+          </div>
+          ${activeHabits.length?activeHabits.map(habit=>{
+            const streak=calcMaxStreak(habit.done);
+            return `<div class="dash-habit-row" onclick="markHabitDoneFromDashboard('${habit.id}')">
+              <div class="dash-habit-info">
+                <span class="dash-habit-name">${escapeHtml(habit.name)}</span>
+                <span class="dash-habit-streak">🔥 ${toAr(streak)} يوم</span>
+              </div>
+              <span class="btn btn-primary btn-sm">إكمال ✓</span>
+            </div>`;
+          }).join(''):'<div class="dash-empty-compact dash-empty-success">✓ كل العادات مكتملة اليوم</div>'}
+          <button class="btn btn-ghost btn-sm" onclick="goPage('habits')" style="width:100%;margin-top:10px;justify-content:center">عرض كل العادات ←</button>
         </div>
       </div>
-    </div>
-    
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;">
-      <button class="btn btn-primary" onclick="addTask()" style="padding:12px;">+ إضافة مهمة</button>
-      <button class="btn btn-ghost" onclick="addHabitModal()" style="padding:12px;">+ عادة جديدة</button>
-    </div>
-    
-    <div style="position:fixed;bottom:30px;right:30px;z-index:30;">
-      <button class="fab-btn" onclick="openQuickAdd()" title="Cmd+K">⚡</button>
+      
+      <!-- Weekly Stats -->
+      <div class="dash-stats-row">
+        <div class="stat-card"><div class="stat-label">إنجاز العادات</div><div class="stat-value">${toAr(habitRateThisWeek)}٪</div><div class="stat-change stat-up">هذا الأسبوع</div></div>
+        <div class="stat-card"><div class="stat-label">مهام منجزة</div><div class="stat-value">${toAr(completedToday)}</div><div class="stat-change stat-neutral">اليوم</div></div>
+      </div>
     </div>
   </div>`;
 }
@@ -323,30 +438,41 @@ function renderMobileNavItem(item){
 }
 
 function renderMobileShell(){
+  const mobileCoreNav = [
+    {page:'home',icon:'🏠',label:'الرئيسية'},
+    {page:'tasks',icon:'✅',label:'المهام'},
+    {page:'habits',icon:'◎',label:'العادات'},
+    {page:'money',icon:'💰',label:'مصروف'},
+    {page:'more',icon:'⋯',label:'المزيد', isMoreBtn: true}
+  ];
+
   return `<div class="mobile-shell">
     <div class="mobile-topbar">
-      <div>
-        <div class="mobile-brand">Personal trackers</div>
-        <div class="mobile-caption">نظامك الشخصي</div>
-      </div>
-      <div class="mobile-side-meta">
-        <div class="mobile-energy">الطاقة <strong id="m-energy-mini">٥/١٠</strong></div>
-        <div class="mobile-clock">
-          <strong id="m-date">—</strong>
-          <span id="m-time">—</span>
+      <div class="mobile-topbar-row">
+        <div class="mobile-brand">Sama</div>
+        <div class="mobile-topbar-right">
+          <span class="mobile-date-compact" id="m-date">—</span>
+          <div class="sync-indicator syncing mobile-sync" id="sync-indicator-mobile"><span class="sync-dot"></span></div>
         </div>
-        <div class="sync-indicator syncing mobile-sync" id="sync-indicator-mobile"><span class="sync-dot"></span><span id="sync-text-mobile">syncing...</span></div>
-      </div>
-      <div class="mobile-xp-widget">
-        <div class="mobile-xp-top"><span id="m-xp-level">المستوى ١ ✦</span><span id="m-xp-mini">٠/٢٠٠</span></div>
-        <div class="prog-wrap xp-prog"><div class="prog-fill prog-gold" id="m-xp-bar" style="width:0%"></div></div>
       </div>
     </div>
-    <div class="mobile-nav" aria-label="أقسام النظام">
-      <div class="mobile-nav-track">
-        ${MOBILE_NAV_ITEMS.map(renderMobileNavItem).join('')}
-      </div>
+  </div>
+  <nav class="mobile-bottom-nav" aria-label="أقسام النظام">
+    <div class="mobile-nav-track">
+      ${mobileCoreNav.map(item=>`
+        <button class="mobile-nav-btn ${item.page==='home'?'active':''}" type="button" onclick="${item.isMoreBtn ? 'openSidebarMobile()' : `goPage('${item.page}')`}" data-page="${item.page}">
+          <span class="mobile-nav-icon">${item.icon}</span>
+          <span>${item.label}</span>
+        </button>
+      `).join('')}
     </div>
+  </nav>
+  <div class="mobile-hidden-ids" style="display:none">
+    <span id="m-energy-mini"></span>
+    <span id="m-time"></span>
+    <span id="m-xp-level"></span>
+    <span id="m-xp-mini"></span>
+    <div id="m-xp-bar"></div>
   </div>`;
 }
 
@@ -393,7 +519,12 @@ function renderQuickActions(){
 
 function renderHomePage(){
   return `<div class="page active" id="page-home">
-    ${renderRedesignedDashboard()}
+    <div class="dashboard-mobile-view hide-on-desktop">
+      ${renderMobileDashboard()}
+    </div>
+    <div class="dashboard-desktop-view hide-on-mobile">
+      ${renderDesktopDashboard()}
+    </div>
   </div>`;
 }
     
@@ -989,7 +1120,7 @@ function renderShellOverlays(){
 </div>
 <div class="toast" id="toast"></div>
 <div class="xp-toast" id="xp-toast"></div>
-<div class="loading-overlay" id="app-loading">
+<div class="loading-overlay hidden" id="app-loading">
   <div class="loading-box">
     <div class="loading-spinner"></div>
     <div class="loading-title">جاري تجهيز Personal trackers...</div>
