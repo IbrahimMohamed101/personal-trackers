@@ -69,7 +69,7 @@ const ADMIN_COLLECTION_DEFS=[
     label:'المصاريف',
     empty:'لا توجد مصاريف لهذا المستخدم.',
     columns:[
-      {label:'المبلغ',value:row=>adminMoneyValue(row.amount)},
+      {label:'المبلغ',value:row=>adminMoneyValue(row.amount,row.currency)},
       {label:'الفئة',value:row=>row.category},
       {label:'التاريخ',value:row=>row.dateKey},
       {label:'ملاحظة',value:row=>row.note},
@@ -181,7 +181,10 @@ function adminNormalizeUserDoc(source){
     weeklyChallenge:String(row.weeklyChallenge||''),
     weeklyChallengeProgress:Number(row.weeklyChallengeProgress)||0,
     weeklyChallengeDone:Boolean(row.weeklyChallengeDone),
-    settings:row.settings&&typeof row.settings==='object'?row.settings:{language:'ar',fontScale:1},
+    settings:row.settings&&typeof row.settings==='object'?{
+      ...row.settings,
+      currency:normalizeCurrencyCode(row.settings.currency),
+    }:{language:'ar',fontScale:1,currency:DEFAULT_MONEY_CURRENCY},
     pomodoro:row.pomodoro&&typeof row.pomodoro==='object'?row.pomodoro:{mode:'focus',running:false,remainingSec:0,totalSessions:0},
   };
 }
@@ -222,10 +225,10 @@ function adminArrayValue(value){
   return escapeHtml(value.map(item=>String(item)).join('، '));
 }
 
-function adminMoneyValue(value){
+function adminMoneyValue(value,currencyCode){
   const amount=Number(value);
   if(!Number.isFinite(amount))return '—';
-  return `${escapeHtml(lang()==='en'?amount.toLocaleString('en-GB'):toArFull(amount))} ₽`;
+  return escapeHtml(formatMoneyValue(amount,normalizeCurrencyCode(currencyCode)));
 }
 
 function adminJournalGratitude(row){
@@ -516,7 +519,7 @@ function adminRenderDetail(detail){
       {label:'level',value:adminTextValue(profile.level)},
       {label:'xp',value:adminTextValue(profile.xp)},
       {label:'energy',value:adminTextValue(profile.energy)},
-      {label:'savingsGoal',value:adminMoneyValue(profile.savingsGoal)},
+      {label:'savingsGoal',value:adminMoneyValue(profile.savingsGoal,profile.settings&&profile.settings.currency)},
       {label:'timezone',value:adminTextValue(profile.timezone)},
       {label:'providerId',value:adminTextValue(profile.providerId)},
       {label:'createdAt',value:adminFormatDateTime(profile.createdAt)},
@@ -535,6 +538,7 @@ function adminRenderDetail(detail){
     ${adminDetailInfoCard('Settings',[
       {label:'language',value:adminTextValue(settings.language)},
       {label:'fontScale',value:adminTextValue(settings.fontScale)},
+      {label:'currency',value:adminTextValue(settings.currency)},
       {label:'timezone',value:adminTextValue(settings.timezone||profile.timezone)},
     ])}
     ${adminDetailInfoCard('Pomodoro',[

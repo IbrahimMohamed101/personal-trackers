@@ -3,9 +3,65 @@ function csvRow(values){
   return values.map(value=>`"${String(value??'').replace(/"/g,'""')}"`).join(',');
 }
 
+function getMoneyDisplayCurrency(){
+  return getMoneyCurrency();
+}
+
+function getMoneyCurrencyMeta(code=getMoneyDisplayCurrency()){
+  return getCurrencyMeta(code);
+}
+
+function getExpensesForCurrency(code=getMoneyDisplayCurrency()){
+  const currency=normalizeCurrencyCode(code);
+  return (S.expenses||[]).filter(expense=>getExpenseCurrency(expense,currency)===currency);
+}
+
+function formatExpenseValue(amount,currencyCode,options={}){
+  return formatMoneyValue(amount,currencyCode,options);
+}
+
+function syncMoneyCurrencyUi(){
+  const currency=getMoneyDisplayCurrency();
+  const meta=getMoneyCurrencyMeta(currency);
+  const currencySelect=document.getElementById('m-currency');
+  const amountInput=document.getElementById('m-amount');
+  const noteEl=document.getElementById('m-currency-note');
+  const balanceSub=document.getElementById('m-balance-sub');
+  const incomeSub=document.getElementById('m-income-sub');
+  const totalSub=document.getElementById('m-total-sub');
+
+  if(currencySelect&&currencySelect.value!==currency)currencySelect.value=currency;
+  if(amountInput)amountInput.placeholder=`المبلغ (${meta.symbol})`;
+  if(noteEl)noteEl.textContent=`العملة الحالية: ${getCurrencyLabel(currency)} — الملخص يحسب عمليات هذه العملة فقط.`;
+  if(balanceSub)balanceSub.textContent=`${getCurrencyLabel(currency)} (دخل - مصاريف)`;
+  if(incomeSub)incomeSub.textContent=`${getCurrencyLabel(currency)} مكتسب`;
+  if(totalSub)totalSub.textContent=`${getCurrencyLabel(currency)} مصروف`;
+}
+
+function syncQuickExpenseCurrency(value){
+  const currency=normalizeCurrencyCode(value);
+  const label=document.getElementById('modal-m-amount-label');
+  if(label)label.textContent=`المبلغ (${getMoneyCurrencyMeta(currency).symbol})`;
+}
+
+function setMoneyCurrency(value){
+  const currency=normalizeCurrencyCode(value);
+  if(!S.settings||typeof S.settings!=='object'){
+    S.settings={fontScale:1,language:'ar',currency};
+  }else{
+    S.settings.currency=currency;
+  }
+  syncMoneyCurrencyUi();
+  renderMoney();
+  renderStats();
+  save();
+}
+
 function exportExpensesCsv(){
-  const rows=[['id','date','category','note','amount']];
-  S.expenses.forEach(expense=>rows.push([expense.id,expense.date,expense.cat,expense.note,expense.amt]));
+  const rows=[['id','date','category','note','amount','currency']];
+  (S.expenses||[]).forEach(expense=>{
+    rows.push([expense.id,expense.date,expense.cat,expense.note,expense.amt,getExpenseCurrency(expense)]);
+  });
   downloadFile(`sama-transactions-${todayKey()}.csv`,"\uFEFF"+rows.map(csvRow).join('\n'),'text/csv;charset=utf-8');
   toast(lang()==='en'?'Transactions CSV exported':'تم تصدير CSV المعاملات');
 }
@@ -26,9 +82,10 @@ function getCurrentMonthRange(){
   return {start:dateKeyFromDate(start),end:dateKeyFromDate(end)};
 }
 
-function getCategorySpentThisMonth(category){
+function getCategorySpentThisMonth(category,currencyCode=getMoneyDisplayCurrency()){
   const {start,end}=getCurrentMonthRange();
-  return (S.expenses||[]).filter(expense=>expense.cat===category&&expense.date>=start&&expense.date<=end).reduce((sum,expense)=>sum+expense.amt,0);
+  const currency=normalizeCurrencyCode(currencyCode);
+  return getExpensesForCurrency(currency).filter(expense=>expense.cat===category&&expense.date>=start&&expense.date<=end).reduce((sum,expense)=>sum+expense.amt,0);
 }
 
 function isIncome(cat){
@@ -43,7 +100,8 @@ function updateBudget(category,value){
 }
 
 function calculateProjectedSavingsDate(){
-  const savingsEntries=(S.expenses||[]).filter(expense=>expense.cat==='ادخار');
+  const currency=getMoneyDisplayCurrency();
+  const savingsEntries=getExpensesForCurrency(currency).filter(expense=>expense.cat==='ادخار');
   const savings=getSavingsTotal();
   const remaining=Math.max(0,(Number(S.savingsGoal)||0)-savings);
   if(!savingsEntries.length||remaining<=0)return remaining<=0?'وصلتِ للهدف بالفعل ✦':'لا يوجد معدل كافٍ للتوقع بعد';
@@ -64,16 +122,17 @@ function renderBudgetManager(){
   ensureBudgetDefaults();
   const container=document.getElementById('budget-list');
   if(!container)return;
+  const currency=getMoneyDisplayCurrency();
   container.className='budget-list';
   container.innerHTML=BUDGET_CATEGORIES.map(category=>{
     const budget=S.budgets[category];
-    const spent=getCategorySpentThisMonth(category);
+    const spent=getCategorySpentThisMonth(category,currency);
     const limit=Math.max(0,Number(budget.limit)||0);
     const pct=limit?Math.round(spent/limit*100):0;
     let color='var(--green)';
     if(limit&&pct>100)color='var(--red)';
     else if(limit&&pct>=75)color='var(--amber)';
-    return `<div class="budget-row"><div class="budget-head"><div><div class="budget-name">${escapeHtml(category)}</div><div class="budget-meta">${toArFull(spent)} / ${toArFull(limit)} ₽</div></div><input class="inp budget-input" type="number" min="0" value="${limit}" onchange="updateBudget('${category}',this.value)"></div><div class="budget-track"><div class="budget-fill" style="width:${Math.min(100,pct)}%;background:${color}"></div></div></div>`;
+    return `<div class="budget-row"><div class="budget-head"><div><div class="budget-name">${escapeHtml(category)}</div><div class="budget-meta">${formatExpenseValue(spent,currency)} / ${formatExpenseValue(limit,currency)}</div></div><input class="inp budget-input" type="number" min="0" value="${limit}" onchange="updateBudget('${category}',this.value)"></div><div class="budget-track"><div class="budget-fill" style="width:${Math.min(100,pct)}%;background:${color}"></div></div></div>`;
   }).join('');
   const projection=document.getElementById('budget-projection');
   if(projection)projection.textContent=calculateProjectedSavingsDate();
@@ -100,22 +159,35 @@ function saveSavingsGoalInline(){
   toast('تم تعديل هدف التحويش');
 }
 
+function createExpenseRecord({amount,category,note,currency,date,createdAt}){
+  return {
+    id:generateNumericId(),
+    amt:amount,
+    cat:category,
+    currency:normalizeCurrencyCode(currency),
+    note,
+    date:date||todayKey(),
+    createdAt:createdAt||new Date().toISOString(),
+  };
+}
+
 function addExpense(){
   const amt=parseFloat(document.getElementById('m-amount').value);
   const cat=document.getElementById('m-cat').value;
   const note=document.getElementById('m-note').value.trim();
+  const currency=getMoneyDisplayCurrency();
   if(!amt||isNaN(amt)||amt<=0){
     toast(lang()==='en'?'Enter a valid amount':'أدخلي مبلغ صحيح');
     return;
   }
-  S.expenses.unshift({id:generateNumericId(),amt,cat,note,date:todayKey(),createdAt:new Date().toISOString()});
+  S.expenses.unshift(createExpenseRecord({amount:amt,category:cat,note,currency}));
   ensureBudgetDefaults();
   document.getElementById('m-amount').value='';
   document.getElementById('m-note').value='';
   let exceededBudget=false;
-  if(cat!=='ادخار' && !isIncome(cat)){
+  if(cat!=='ادخار'&&!isIncome(cat)){
     const limit=Math.max(0,Number((S.budgets[cat]||{}).limit)||0);
-    const spent=getCategorySpentThisMonth(cat);
+    const spent=getCategorySpentThisMonth(cat,currency);
     if(limit&&spent>limit)exceededBudget=true;
   }
   grantXp(5);
@@ -131,26 +203,28 @@ function addExpense(){
 
 function renderMoney(){
   ensureBudgetDefaults();
-  const savings=S.expenses.filter(expense=>expense.cat==='ادخار').reduce((sum,expense)=>sum+expense.amt,0);
-  const income=S.expenses.filter(expense=>isIncome(expense.cat)).reduce((sum,expense)=>sum+expense.amt,0);
-  const total=S.expenses.filter(expense=>!isIncome(expense.cat)&&expense.cat!=='ادخار').reduce((sum,expense)=>sum+expense.amt,0);
+  const currency=getMoneyDisplayCurrency();
+  const currentExpenses=getExpensesForCurrency(currency);
+  const savings=currentExpenses.filter(expense=>expense.cat==='ادخار').reduce((sum,expense)=>sum+expense.amt,0);
+  const income=currentExpenses.filter(expense=>isIncome(expense.cat)).reduce((sum,expense)=>sum+expense.amt,0);
+  const total=currentExpenses.filter(expense=>!isIncome(expense.cat)&&expense.cat!=='ادخار').reduce((sum,expense)=>sum+expense.amt,0);
   const balance=income-total;
   const balanceEl=document.getElementById('m-balance');
-  if(balanceEl)balanceEl.textContent=toArFull(balance<0?0:balance);
+  if(balanceEl)balanceEl.textContent=formatExpenseValue(balance<0?0:balance,currency);
   const incomeEl=document.getElementById('m-income');
-  if(incomeEl)incomeEl.textContent=toArFull(income);
-  
+  if(incomeEl)incomeEl.textContent=formatExpenseValue(income,currency);
+
   const bar=document.getElementById('m-balance-bar');
   if(bar){
     const pct=income>0?Math.max(0,Math.min(100,Math.round((balance/income)*100))):0;
     bar.style.width=pct+'%';
   }
-  
-  const savingsNav=document.getElementById('m-savings-nav');
-  if(savingsNav)savingsNav.textContent=toArFull(savings)+' ₽';
 
-  const goalVal=document.getElementById('m-savings-goal-val');
-  if(goalVal)goalVal.textContent=toArFull(S.savingsGoal);
+  const savingsNav=document.getElementById('m-savings-nav');
+  if(savingsNav)savingsNav.textContent=formatExpenseValue(savings,currency);
+
+  const goalText=document.getElementById('m-savings-goal-text');
+  if(goalText)goalText.textContent=`التحويش المستهدف: ${formatExpenseValue(S.savingsGoal,currency)}`;
 
   const sBar=document.getElementById('m-savings-bar');
   if(sBar){
@@ -159,13 +233,28 @@ function renderMoney(){
   }
 
   const totalEl=document.getElementById('m-total');
-  if(totalEl)totalEl.textContent=toArFull(total);
+  if(totalEl)totalEl.textContent=formatExpenseValue(total,currency);
+
   const cats={};
-  S.expenses.filter(expense=>!isIncome(expense.cat)&&expense.cat!=='ادخار').forEach(expense=>{cats[expense.cat]=(cats[expense.cat]||0)+expense.amt;});
+  currentExpenses.filter(expense=>!isIncome(expense.cat)&&expense.cat!=='ادخار').forEach(expense=>{cats[expense.cat]=(cats[expense.cat]||0)+expense.amt;});
   const catsEl=document.getElementById('m-cats');
-  if(catsEl)catsEl.innerHTML=Object.keys(cats).length?Object.entries(cats).slice(0,5).map(([cat,value])=>`<div class="money-summary-row" style="font-size:12px"><span>${cat}</span><span>${toArFull(value)} ₽</span></div>`).join(''):'<div class="exp-empty" style="padding:12px 0">لا توجد فئات مصروفات بعد</div>';
+  if(catsEl){
+    catsEl.innerHTML=Object.keys(cats).length
+      ?Object.entries(cats).slice(0,5).map(([cat,value])=>`<div class="money-summary-row" style="font-size:12px"><span>${escapeHtml(cat)}</span><span>${formatExpenseValue(value,currency)}</span></div>`).join('')
+      :`<div class="exp-empty" style="padding:12px 0">${currentExpenses.length?'لا توجد فئات مصروفات لهذه العملة بعد':'لا توجد عمليات بهذه العملة بعد'}</div>`;
+  }
+
   const log=document.getElementById('exp-log');
-  if(log)log.innerHTML=S.expenses.length===0?'<div class="exp-empty"><div class="empty-state"><div class="icon">◈</div><div>سجلي أول عملية ليكِ</div></div></div>':S.expenses.slice(0,25).map(expense=>`<div class="exp-item"><span class="exp-item-cat">${escapeHtml(expense.cat)}</span><span class="exp-item-note">${escapeHtml(expense.note||'بدون ملاحظة')}</span><span class="exp-item-amt ${expense.cat==='ادخار'||isIncome(expense.cat)?'savings':''}">${isIncome(expense.cat)?'+':''}${toArFull(expense.amt)} ₽</span><span class="exp-item-date">${formatShortDate(expense.date)}</span><span class="exp-item-actions"><button class="mini-action danger" onclick="deleteExpense(${expense.id})">حذف</button></span></div>`).join('');
+  if(log){
+    log.innerHTML=(S.expenses||[]).length===0
+      ?'<div class="exp-empty"><div class="empty-state"><div class="icon">◈</div><div>سجلي أول عملية ليكِ</div></div></div>'
+      :(S.expenses||[]).slice(0,25).map(expense=>{
+        const expenseCurrency=getExpenseCurrency(expense,currency);
+        return `<div class="exp-item"><span class="exp-item-cat">${escapeHtml(expense.cat)}</span><span class="exp-item-note">${escapeHtml(expense.note||'بدون ملاحظة')}</span><span class="exp-item-amt ${expense.cat==='ادخار'||isIncome(expense.cat)?'savings':''}">${formatExpenseValue(expense.amt,expenseCurrency,{showPlus:isIncome(expense.cat)})}</span><span class="exp-item-date">${formatShortDate(expense.date)}</span><span class="exp-item-actions"><button class="mini-action danger" onclick="deleteExpense(${expense.id})">حذف</button></span></div>`;
+      }).join('');
+  }
+
+  syncMoneyCurrencyUi();
   renderBudgetManager();
 }
 
@@ -174,11 +263,11 @@ function deleteExpense(id){
   if(!expense)return;
   openModal(lang()==='en'?'Delete Expense':'حذف المصروف',
     '<p>'+(lang()==='en'?'Are you sure you want to delete this expense?':'هل أنتِ متأكدة من حذف هذا المصروف؟')+'</p>',
-    [{text:lang()==='en'?'Delete':'حذف', primary:true, fn:`confirmDeleteExpense(${id})`},
-     {text:lang()==='en'?'Cancel':'إلغاء', fn:'closeModal'}]);
+    [{text:lang()==='en'?'Delete':'حذف',primary:true,fn:`confirmDeleteExpense(${id})`},
+     {text:lang()==='en'?'Cancel':'إلغاء',fn:'closeModal'}]);
 }
 
-window.confirmDeleteExpense = function(id) {
+window.confirmDeleteExpense=function(id){
   S.expenses=S.expenses.filter(item=>Number(item.id)!==Number(id));
   renderMoney();
   renderStats();
@@ -188,10 +277,15 @@ window.confirmDeleteExpense = function(id) {
   save();
   closeModal();
   toast(lang()==='en'?'Expense deleted':'تم حذف المصروف');
-}
+};
 
 function openSavingsGoalModal(){
-  openModal(lang()==='en'?'Savings Goal':'هدف التحويش','<div class="form-group"><label class="form-label">'+(lang()==='en'?'Target Amount':'المبلغ المستهدف')+'</label><input class="inp" id="savings-goal-input" type="number" min="0" value="'+escapeHtml(S.savingsGoal)+'"></div>',[{text:lang()==='en'?'Save':'حفظ',primary:true,fn:'confirmSavingsGoal'},{text:lang()==='en'?'Cancel':'إلغاء',fn:'closeModal'}]);
+  const currencyLabel=getCurrencyLabel(getMoneyDisplayCurrency());
+  openModal(
+    lang()==='en'?'Savings Goal':'هدف التحويش',
+    '<div class="form-group"><label class="form-label">'+(lang()==='en'?'Target Amount':'المبلغ المستهدف')+` (${escapeHtml(currencyLabel)})`+'</label><input class="inp" id="savings-goal-input" type="number" min="0" value="'+escapeHtml(S.savingsGoal)+'"></div>',
+    [{text:lang()==='en'?'Save':'حفظ',primary:true,fn:'confirmSavingsGoal'},{text:lang()==='en'?'Cancel':'إلغاء',fn:'closeModal'}]
+  );
 }
 
 function confirmSavingsGoal(){
@@ -203,10 +297,18 @@ function confirmSavingsGoal(){
   save();
   toast(lang()==='en'?'Goal updated':'تم تعديل هدف التحويش');
 }
+
 function openExpenseModal(){
+  const currency=getMoneyDisplayCurrency();
   const body=`
     <div class="form-group">
-      <label class="form-label">المبلغ (₽)</label>
+      <label class="form-label">العملة</label>
+      <select class="inp" id="modal-m-currency" onchange="syncQuickExpenseCurrency(this.value)">
+        ${renderCurrencyOptions(currency)}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label" id="modal-m-amount-label">المبلغ (${escapeHtml(getMoneyCurrencyMeta(currency).symbol)})</label>
       <input type="number" class="inp" id="modal-m-amount" placeholder="٠">
     </div>
     <div class="form-group">
@@ -236,9 +338,9 @@ function openExpenseModal(){
       <input type="text" class="inp" id="modal-m-note" placeholder="ملاحظة قصيرة">
     </div>
   `;
-  openModal('تسجيل عملية سريعة', body, [
-    {text:'سجّلي', primary:true, fn:'confirmQuickExpense'},
-    {text:'إلغاء', fn:'closeModal'}
+  openModal('تسجيل عملية سريعة',body,[
+    {text:'سجّلي',primary:true,fn:'confirmQuickExpense'},
+    {text:'إلغاء',fn:'closeModal'}
   ]);
 }
 
@@ -246,21 +348,23 @@ function confirmQuickExpense(){
   const amt=parseFloat(document.getElementById('modal-m-amount').value);
   const cat=document.getElementById('modal-m-cat').value;
   const note=document.getElementById('modal-m-note').value.trim();
+  const currency=normalizeCurrencyCode(document.getElementById('modal-m-currency').value);
   if(!amt||isNaN(amt)||amt<=0){
     toast('أدخلي مبلغ صحيح');
     return;
   }
-  S.expenses.unshift({id:generateNumericId(),amt,cat,note,date:todayKey(),createdAt:new Date().toISOString()});
+  setMoneyCurrency(currency);
+  S.expenses.unshift(createExpenseRecord({amount:amt,category:cat,note,currency}));
   grantXp(5);
   updateWeeklyChallengeProgress();
-  if(document.getElementById('page-money').classList.contains('active')) renderMoney();
+  if(document.getElementById('page-money').classList.contains('active'))renderMoney();
   renderStats();
   renderAchievements();
   updateLifeCards();
   save();
   closeModal();
-  document.getElementById('modal-m-amount').value = '';
-  document.getElementById('modal-m-note').value = '';
-  document.getElementById('modal-m-cat').selectedIndex = 0;
+  document.getElementById('modal-m-amount').value='';
+  document.getElementById('modal-m-note').value='';
+  document.getElementById('modal-m-cat').selectedIndex=0;
   toast(cat==='ادخار'?'💚 تم إضافة الادخار!':isIncome(cat)?'💰 تم إضافة الدخل!':'✓ تم تسجيل المصروف');
 }

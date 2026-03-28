@@ -93,14 +93,10 @@ function normalizeStateShape(source){
     weekly:{w1:'',w2:'',w3:'',w4:''},
     weeklyHistory:[],
     moodLog:[],
-    settings:{fontScale:1,language:'ar'},
+    settings:{fontScale:1,language:'ar',currency:DEFAULT_MONEY_CURRENCY},
     pomodoro:{mode:'focus',remainingSec:1500,running:false,lastTickAt:null,sessionsToday:{},totalSessions:0},
   };
   
-  if (normalized.weeklyChallenge && typeof normalized.weeklyChallenge === 'string') {
-    normalized.weeklyChallenge = normalized.weeklyChallenge.replace(/جنيه/g, 'روبل');
-  }
-
   const habitsSrc=Array.isArray(src.habits)?src.habits:defaults.habits;
   normalized.habits=habitsSrc.map((habit,index)=>({
     id:String(habit&&habit.id?habit.id:habit&&habit.name?habit.name.replace(/[^\w\u0600-\u06FF]+/g,'_'):'habit_'+(index+1)),
@@ -113,6 +109,7 @@ function normalizeStateShape(source){
     id:Number.isFinite(Number(expense&&expense.id))?Number(expense.id):generateNumericId()+index,
     amt:Number(expense&&(expense.amt??expense.amount))||0,
     cat:String(expense&&(expense.cat||expense.category)||'أخرى'),
+    currency:normalizeCurrencyCode(expense&&(expense.currency||expense.currencyCode)||src&&src.settings&&src.settings.currency||defaults.settings.currency),
     note:String(expense&&expense.note||''),
     date:normalizeDateKey(expense&&(expense.date||expense.expense_date),todayKey()),
     createdAt:String(expense&&(expense.createdAt||expense.created_at)||new Date().toISOString()),
@@ -192,6 +189,7 @@ function normalizeStateShape(source){
   normalized.settings={
     fontScale:Number.isFinite(fontScale)?clamp(fontScale,0.9,1.2):defaults.settings.fontScale,
     language:['ar','en'].includes(settingsSrc.language)?settingsSrc.language:defaults.settings.language,
+    currency:normalizeCurrencyCode(settingsSrc.currency||defaults.settings.currency),
   };
 
   const pomodoroSrc=src.pomodoro&&typeof src.pomodoro==='object'?src.pomodoro:{};

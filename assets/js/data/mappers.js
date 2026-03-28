@@ -63,7 +63,10 @@ function stateToFirestore(state,uid){
         w3:String(snapshot.weekly&&snapshot.weekly.w3||''),
         w4:String(snapshot.weekly&&snapshot.weekly.w4||''),
       },
-      settings:snapshot.settings&&typeof snapshot.settings==='object'?snapshot.settings:{fontScale:1,language:'ar'},
+      settings:snapshot.settings&&typeof snapshot.settings==='object'?{
+        ...snapshot.settings,
+        currency:normalizeCurrencyCode(snapshot.settings.currency),
+      }:{fontScale:1,language:'ar',currency:DEFAULT_MONEY_CURRENCY},
       pomodoro:snapshot.pomodoro&&typeof snapshot.pomodoro==='object'?snapshot.pomodoro:{mode:'focus',remainingSec:1500,running:false,lastTickAt:null,sessionsToday:{},totalSessions:0},
     },
     collections:{
@@ -78,6 +81,7 @@ function stateToFirestore(state,uid){
         id:mapDocId(expense&&expense.id,generateNumericId()),
         amount:Number(expense&&expense.amt)||0,
         category:String(expense&&expense.cat||'أخرى'),
+        currency:normalizeCurrencyCode(expense&&expense.currency||snapshot&&snapshot.settings&&snapshot.settings.currency),
         note:String(expense&&expense.note||''),
         dateKey:String(expense&&expense.date||todayKey()),
         createdAt:String(expense&&expense.createdAt||createdAt),
@@ -221,6 +225,7 @@ function firestoreToState(remote,fallbackState){
       id:row.id,
       amount:row.amount,
       category:row.category,
+      currency:normalizeCurrencyCode(row.currency||userDoc.settings&&userDoc.settings.currency||fallback.settings&&fallback.settings.currency),
       note:row.note,
       expense_date:row.dateKey,
       created_at:row.createdAt,
@@ -280,7 +285,13 @@ function firestoreToState(remote,fallbackState){
       note:row.note,
       createdAt:row.createdAt,
     })).sort(sortByDateDesc),
-    settings:userDoc.settings&&typeof userDoc.settings==='object'?userDoc.settings:fallback.settings,
+    settings:userDoc.settings&&typeof userDoc.settings==='object'?{
+      ...userDoc.settings,
+      currency:normalizeCurrencyCode(userDoc.settings.currency||fallback.settings&&fallback.settings.currency),
+    }:{
+      ...(fallback.settings||{}),
+      currency:normalizeCurrencyCode(fallback.settings&&fallback.settings.currency),
+    },
     pomodoro:userDoc.pomodoro&&typeof userDoc.pomodoro==='object'?userDoc.pomodoro:fallback.pomodoro,
   };
 }

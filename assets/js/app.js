@@ -1,6 +1,15 @@
 // INIT
 function rerenderOnboardingFlow(){
-  renderAppShell();
+  renderOnboardingShell();
+}
+
+function renderOnboardingShell(){
+  const root=document.getElementById('app-root');
+  if(!root||typeof renderOnboardingFlow!=='function'||typeof renderShellOverlays!=='function')return;
+  root.innerHTML=`${renderOnboardingFlow()}${renderShellOverlays()}`;
+  if(typeof setLoadingVisible==='function'){
+    setLoadingVisible(false);
+  }
 }
 
 function showShellAfterOnboarding(){
@@ -281,7 +290,7 @@ async function routeAfterAuthResolution(){
   const currentUser=typeof getCurrentFirebaseUser==='function'?getCurrentFirebaseUser():null;
   if(!currentUser||!currentUser.uid||typeof goPage!=='function')return;
   if(isOnboardingPending()){
-    renderAppShell();
+    renderOnboardingShell();
     return;
   }
   if(typeof requestAdminAccessRefresh==='function'){

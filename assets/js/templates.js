@@ -193,6 +193,7 @@ function renderMobileDashboard(){
   const completedToday=((S.tasks||[]).filter(t=>t.date===today&&t.done)||[]).length;
   const totalTodayTasks=(S.tasks||[]).filter(t=>t.date===today).length;
   const savings=getSavingsTotal?getSavingsTotal():0;
+  const moneyCurrency=getMoneyCurrency();
   const habitRateThisWeek=topHabits.length?Math.round(topHabits.reduce((sum,h)=>{
     const weekStart=challengeWeekStartKey(today);
     let count=0;
@@ -233,7 +234,7 @@ function renderMobileDashboard(){
       <div class="db-stats-merged">
         <div class="db-stat-pill">📋 ${toAr(completedToday)}/${toAr(totalTodayTasks)} مهام</div>
         <div class="db-stat-pill">🔥 ${toAr(habitRateThisWeek)}٪ عادات</div>
-        <div class="db-stat-pill">💰 ${toArFull(savings)} ₽</div>
+        <div class="db-stat-pill">💰 ${formatMoneyValue(savings,moneyCurrency)}</div>
       </div>
     </div>
 
@@ -293,6 +294,7 @@ function renderDesktopDashboard(){
   const completedToday=((S.tasks||[]).filter(t=>t.date===today&&t.done)||[]).length;
   const totalTodayTasks=(S.tasks||[]).filter(t=>t.date===today).length;
   const savings=getSavingsTotal?getSavingsTotal():0;
+  const moneyCurrency=getMoneyCurrency();
   const habitRateThisWeek=topHabits.length?Math.round(topHabits.reduce((sum,h)=>{
     const weekStart=challengeWeekStartKey(today);
     let count=0;
@@ -321,7 +323,7 @@ function renderDesktopDashboard(){
         <div class="db-stat-item"><span class="db-stat-icon">✅</span> <span>${toAr(completedToday)}/${toAr(totalTodayTasks)}</span> مهام</div>
         <div class="db-stat-item"><span class="db-stat-icon">🔥</span> <span>${toAr(habitRateThisWeek)}٪</span> عادات</div>
         <div class="db-stat-item"><span class="db-stat-icon">⚡</span> <span>${toAr(S.energy)}/١٠</span></div>
-        <div class="db-stat-item"><span class="db-stat-icon">💰</span> <span>${toArFull(savings)}</span> ₽</div>
+        <div class="db-stat-item"><span class="db-stat-icon">💰</span> <span>${formatMoneyValue(savings,moneyCurrency)}</span></div>
       </div>
     </div>
 
@@ -490,7 +492,7 @@ function renderDailyBrief(){
     </div>
     <div class="db-stats-mini">
       <div class="db-stat-item"><span class="db-stat-icon">🔥</span> <span id="stat-streak-mini">٠</span> يوم</div>
-      <div class="db-stat-item"><span class="db-stat-icon">💰</span> <span id="stat-savings-mini">٠</span> ₽</div>
+      <div class="db-stat-item"><span class="db-stat-icon">💰</span> <span id="stat-savings-mini">${formatMoneyValue(0,getMoneyCurrency())}</span></div>
       <div class="db-stat-item"><span class="db-stat-icon">✅</span> <span id="stat-habits-mini">٠٪</span></div>
     </div>
   </div>`;
@@ -592,6 +594,7 @@ function renderHabitsPage(){
 }
 
 function renderMoneyPage(){
+  const moneyCurrency=getMoneyCurrency();
   return `<div class="page" id="page-money">
   <div class="page-header">
     <div class="page-header-row">
@@ -600,35 +603,37 @@ function renderMoneyPage(){
         <div class="page-subtitle">١٠٪ فورًا عند استلام الفلوس — القاعدة الذهبية</div>
       </div>
       <div class="page-tools">
+        <select class="inp" id="m-currency" onchange="setMoneyCurrency(this.value)" style="min-width:170px">${renderCurrencyOptions(moneyCurrency)}</select>
         <button class="btn btn-ghost btn-sm" onclick="exportExpensesCsv()">⬇ تصدير CSV</button>
       </div>
     </div>
   </div>
+  <div class="page-subtitle" id="m-currency-note" style="margin-bottom:12px;color:var(--text3)">العملة الحالية: ${escapeHtml(getCurrencyLabel(moneyCurrency))}</div>
   <div class="grid-3" style="margin-bottom:16px">
     <div class="money-stat">
       <div class="ms-label">الرصيد المتاح</div>
       <div class="ms-val" id="m-balance">٠</div>
-      <div class="ms-sub">روبل (دخل - مصاريف)</div>
+      <div class="ms-sub" id="m-balance-sub">${escapeHtml(getCurrencyLabel(moneyCurrency))} (دخل - مصاريف)</div>
       <div class="prog-wrap"><div class="prog-fill prog-green" id="m-balance-bar" style="width:0%"></div></div>
     </div>
     <div class="money-stat">
       <div class="ms-label">دخل الشهر</div>
       <div class="ms-val" id="m-income">٠</div>
-      <div class="ms-sub" style="color:var(--green)">روبل مكتسب</div>
-      <div class="money-summary-row" style="margin-top:8px;cursor:pointer" onclick="openSavingsGoalModal()"><span style="color:var(--text3)">التحويش: <span id="m-savings-goal-val">٥٠٠٠</span> ₽</span><span id="m-savings-wrap"><b id="m-savings-nav">٠ ₽</b></span></div>
+      <div class="ms-sub" id="m-income-sub" style="color:var(--green)">${escapeHtml(getCurrencyLabel(moneyCurrency))} مكتسب</div>
+      <div class="money-summary-row" style="margin-top:8px;cursor:pointer" onclick="openSavingsGoalModal()"><span style="color:var(--text3)" id="m-savings-goal-text">التحويش المستهدف: ${formatMoneyValue(Math.max(0,Number(S.savingsGoal)||0),moneyCurrency)}</span><span id="m-savings-wrap"><b id="m-savings-nav">${formatMoneyValue(0,moneyCurrency)}</b></span></div>
       <div class="prog-wrap"><div class="prog-fill prog-gold" id="m-savings-bar" style="width:0%"></div></div>
     </div>
     <div class="money-stat">
       <div class="ms-label">مصاريف الشهر</div>
       <div class="ms-val" id="m-total">٠</div>
-      <div class="ms-sub" style="color:var(--red)">روبل مصروف</div>
+      <div class="ms-sub" id="m-total-sub" style="color:var(--red)">${escapeHtml(getCurrencyLabel(moneyCurrency))} مصروف</div>
       <div class="money-cats" id="m-cats"></div>
     </div>
   </div>
   <div class="card" style="margin-bottom:16px">
     <div class="section-label">تسجيل عملية</div>
     <div class="money-form">
-      <input type="number" class="inp" id="m-amount" placeholder="المبلغ (₽)" style="flex:1;min-width:100px">
+      <input type="number" class="inp" id="m-amount" placeholder="المبلغ (${escapeHtml(getCurrencyMeta(moneyCurrency).symbol)})" style="flex:1;min-width:100px">
       <select class="inp" id="m-cat" style="flex:1;min-width:120px">
         <optgroup label="الدخل">
           <option value="راتب">💼 راتب</option>

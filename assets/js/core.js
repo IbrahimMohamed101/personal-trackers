@@ -41,14 +41,15 @@ const WEEKLY_CHALLENGE_DEFS=[
   },
   {
     id:'save_200',
-    text:'وفري ٢٠٠ روبل هذا الأسبوع',
+    text:'وفري ٢٠٠ من عملتك هذا الأسبوع',
     reward:100,
     target:200,
     type:'amount',
     progress(){
       const start=challengeWeekStartKey(todayKey());
       const end=shiftDateKey(start,6);
-      return S.expenses.filter(expense=>expense.cat==='ادخار'&&expense.date>=start&&expense.date<=end).reduce((sum,expense)=>sum+expense.amt,0);
+      const currency=getMoneyCurrency();
+      return S.expenses.filter(expense=>expense.cat==='ادخار'&&expense.date>=start&&expense.date<=end&&getExpenseCurrency(expense,currency)===currency).reduce((sum,expense)=>sum+expense.amt,0);
     },
   },
   {
@@ -77,8 +78,43 @@ const WEEKLY_CHALLENGE_DEFS=[
 function digitsAr(v){return String(v).replace(/[0-9]/g,d=>AR_NUMS[d]);}
 function toAr(n){return digitsAr(Math.round(n));}
 function toArFull(n){return Number(n||0).toLocaleString('ar-EG');}
+const DEFAULT_MONEY_CURRENCY='RUB';
+const MONEY_CURRENCIES={
+  RUB:{code:'RUB',symbol:'₽',labelAr:'روبل روسي',labelEn:'Russian Ruble',shortAr:'روبل'},
+  EGP:{code:'EGP',symbol:'ج.م',labelAr:'جنيه مصري',labelEn:'Egyptian Pound',shortAr:'جنيه'},
+  SAR:{code:'SAR',symbol:'ر.س',labelAr:'ريال سعودي',labelEn:'Saudi Riyal',shortAr:'ريال'},
+  USD:{code:'USD',symbol:'$',labelAr:'دولار أمريكي',labelEn:'US Dollar',shortAr:'دولار'},
+};
 function clamp(value,min,max){return Math.min(max,Math.max(min,value));}
 function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));}
+function normalizeCurrencyCode(value){
+  const code=String(value||DEFAULT_MONEY_CURRENCY).trim().toUpperCase();
+  return MONEY_CURRENCIES[code]?code:DEFAULT_MONEY_CURRENCY;
+}
+function getCurrencyMeta(value){
+  return MONEY_CURRENCIES[normalizeCurrencyCode(value)];
+}
+function getMoneyCurrency(){
+  return normalizeCurrencyCode(S&&S.settings&&S.settings.currency);
+}
+function getCurrencyLabel(value){
+  const meta=getCurrencyMeta(value);
+  return lang()==='en'?meta.labelEn:meta.labelAr;
+}
+function getExpenseCurrency(expense,fallback){
+  return normalizeCurrencyCode(expense&&expense.currency||fallback||getMoneyCurrency());
+}
+function formatMoneyValue(value,currencyCode=getMoneyCurrency(),options={}){
+  const amount=Number(value)||0;
+  const meta=getCurrencyMeta(currencyCode);
+  const formatted=lang()==='en'?amount.toLocaleString('en-GB'):toArFull(amount);
+  const prefix=options&&options.showPlus&&amount>0?'+':'';
+  return `${prefix}${formatted} ${meta.symbol}`;
+}
+function renderCurrencyOptions(selectedCode){
+  const current=normalizeCurrencyCode(selectedCode);
+  return Object.values(MONEY_CURRENCIES).map(meta=>`<option value="${meta.code}"${meta.code===current?' selected':''}>${escapeHtml(meta.symbol)} ${escapeHtml(getCurrencyLabel(meta.code))}</option>`).join('');
+}
 function dateKeyFromDate(date){
   const y=date.getFullYear();
   const m=String(date.getMonth()+1).padStart(2,'0');
@@ -181,7 +217,7 @@ const ACHIEVEMENT_DEFS=[
   {id:'streak_7',icon:'🔥',title:'سلسلة ٧ أيام',desc:'وصلي لأي عادة ٧ أيام متتالية'},
   {id:'streak_30',icon:'💎',title:'سلسلة ٣٠ يوم',desc:'وصلي لأي عادة ٣٠ يوم متتالي'},
   {id:'first_saving',icon:'💰',title:'أول ادخار',desc:'أضيفي أول عملية ادخار'},
-  {id:'saved_1000',icon:'🏦',title:'١٠٠٠ روبل محفوظ',desc:'اجمعي ١٠٠٠ روبل ادخار'},
+  {id:'saved_1000',icon:'🏦',title:'١٠٠٠ محفوظة',desc:'اجمعي ١٠٠٠ ادخار'},
   {id:'first_problem_done',icon:'⚡',title:'أول مشكلة محلولة',desc:'حوّلي مشكلة إلى محلولة'},
   {id:'weekly_review',icon:'✍️',title:'مراجعة أسبوعية',desc:'احفظي أول مراجعة أسبوعية'},
   {id:'tasks_10',icon:'✅',title:'١٠ مهام منجزة',desc:'أنجزي ١٠ مهام يومية'},
@@ -254,7 +290,7 @@ function createDefaultState(){
     weekly:{w1:'',w2:'',w3:'',w4:''},
     weeklyHistory:[],
     moodLog:[],
-    settings:{fontScale:1,language:'ar'},
+    settings:{fontScale:1,language:'ar',currency:DEFAULT_MONEY_CURRENCY},
     pomodoro:{mode:'focus',remainingSec:1500,running:false,lastTickAt:null,sessionsToday:{},totalSessions:0},
   };
 }

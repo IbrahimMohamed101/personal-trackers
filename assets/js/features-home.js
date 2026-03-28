@@ -16,11 +16,12 @@ function renderStats(){
   if(streakEl)streakEl.textContent=toAr(maxStreak);
   if(streakMiniEl)streakMiniEl.textContent=toAr(maxStreak);
 
-  const savings=S.expenses.filter(expense=>expense.cat==='ادخار').reduce((sum,expense)=>sum+expense.amt,0);
+  const currency=getMoneyCurrency();
+  const savings=S.expenses.filter(expense=>expense.cat==='ادخار'&&getExpenseCurrency(expense,currency)===currency).reduce((sum,expense)=>sum+expense.amt,0);
   const savingsEl=document.getElementById('stat-savings');
   const savingsMiniEl=document.getElementById('stat-savings-mini');
-  if(savingsEl)savingsEl.textContent=toArFull(savings);
-  if(savingsMiniEl)savingsMiniEl.textContent=toArFull(savings);
+  if(savingsEl)savingsEl.textContent=formatMoneyValue(savings,currency);
+  if(savingsMiniEl)savingsMiniEl.textContent=formatMoneyValue(savings,currency);
 
   const dk=todayKey();
   const todayHabits=S.habits.filter(habit=>habit.done.includes(dk)).length;

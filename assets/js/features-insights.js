@@ -115,11 +115,13 @@ function renderAnalytics(){
   if(zeroHabit){
     suggestions.push(`عادة ${zeroHabit.name} محتاجة انتباه — جربي ربطها بعادة أقوى قبلها.`);
   }
-  const spending=(S.expenses||[]).filter(expense=>!isIncome(expense.cat)&&expense.cat!=='ادخار').reduce((sum,expense)=>sum+expense.amt,0);
+  const currency=getMoneyCurrency();
+  const currentExpenses=(S.expenses||[]).filter(expense=>getExpenseCurrency(expense,currency)===currency);
+  const spending=currentExpenses.filter(expense=>!isIncome(expense.cat)&&expense.cat!=='ادخار').reduce((sum,expense)=>sum+expense.amt,0);
   const savings=getSavingsTotal();
   if(spending>0&&savings<spending*0.1){
     const cats={};
-    (S.expenses||[]).filter(expense=>!isIncome(expense.cat)&&expense.cat!=='ادخار').forEach(expense=>{cats[expense.cat]=(cats[expense.cat]||0)+expense.amt;});
+    currentExpenses.filter(expense=>!isIncome(expense.cat)&&expense.cat!=='ادخار').forEach(expense=>{cats[expense.cat]=(cats[expense.cat]||0)+expense.amt;});
     const topCategory=Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
     suggestions.push(`مصاريفك بتتجاوز التحويش — فكري في تقليل فئة ${topCategory?topCategory[0]:'الأعلى إنفاقًا'}.`);
   }

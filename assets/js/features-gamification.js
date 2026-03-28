@@ -92,7 +92,8 @@ function getMaxHabitStreak(){
 }
 
 function getSavingsTotal(){
-  return (S.expenses||[]).filter(expense=>expense.cat==='ادخار').reduce((sum,expense)=>sum+expense.amt,0);
+  const currency=getMoneyCurrency();
+  return (S.expenses||[]).filter(expense=>expense.cat==='ادخار'&&getExpenseCurrency(expense,currency)===currency).reduce((sum,expense)=>sum+expense.amt,0);
 }
 
 function getActivityDates(){
