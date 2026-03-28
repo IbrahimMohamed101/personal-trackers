@@ -68,16 +68,18 @@ function applySettings(){
   const languageSelect=document.getElementById('language-select');
   if(languageSelect)languageSelect.value=settings.language;
 
-  const desktopLabels={home:'⬡',tasks:'✅',habits:'◎',money:'◈',problems:'◫',journal:'📝',mood:'◍',analytics:'📊',goals:'◬',weekly:'◧',pomodoro:'◴',achievements:'🏆',tips:'✦',settings:'⚙'};
+  const desktopLabels={home:'⬡',tasks:'✅',habits:'◎',money:'◈',problems:'◫',journal:'📝',mood:'◍',analytics:'📊',goals:'◬',weekly:'◧',pomodoro:'◴',achievements:'🏆',tips:'✦',settings:'⚙',admin:'🛡'};
   Object.keys(desktopLabels).forEach(page=>{
     const nav=document.querySelector(`.nav-item[data-page="${page}"]`);
     if(nav){
-      const label=langText(`nav.${page}`,page);
+      const fallbackLabel=page==='admin'?(lang()==='en'?'Admin Dashboard':'لوحة التحكم'):page;
+      const label=langText(`nav.${page}`,fallbackLabel);
       nav.innerHTML=`<span class="nav-icon">${desktopLabels[page]}</span> ${label}${page==='tips'?' <span class="nav-badge">١٢</span>':''}`;
     }
     const mobile=document.querySelector(`.mobile-nav-btn[data-page="${page}"]`);
     if(mobile){
-      mobile.innerHTML=`<span class="mobile-nav-icon">${desktopLabels[page]}</span><span>${langText(`mobileNav.${page}`,page)}</span>`;
+      const fallbackLabel=page==='admin'?(lang()==='en'?'Admin':'لوحة التحكم'):page;
+      mobile.innerHTML=`<span class="mobile-nav-icon">${desktopLabels[page]}</span><span>${langText(`mobileNav.${page}`,fallbackLabel)}</span>`;
     }
   });
 
@@ -119,6 +121,7 @@ function applySettings(){
       achievements:['الإنجازات','شارات صغيرة تذكّرك أن التقدم الحقيقي بيحصل'],
       tips:['مكتبة النصائح ✦','نصائح علمية ومجربة لكل المشاكل اللي بتواجهيها'],
       settings:['الإعدادات','تحكم في شكل التطبيق والنسخ الاحتياطي والتصدير'],
+      admin:['لوحة التحكم','متابعة المستخدمين وبياناتهم من مكان واحد'],
     },
     en:{
       habits:['Daily Habits','Consistency matters more than perfection'],
@@ -134,6 +137,7 @@ function applySettings(){
       achievements:['Achievements','Small badges that prove progress is real'],
       tips:['Tips Library ✦','Practical guidance for your recurring challenges'],
       settings:['Settings','Interface controls, backups, and exports'],
+      admin:['Admin Dashboard','Monitor users and their activity from one place'],
     },
   };
   Object.entries(pageText[settings.language]).forEach(([page,texts])=>{
@@ -316,6 +320,9 @@ function refreshAuthUi(){
   setAppAccessState(Boolean(user&&user.uid));
   authPanels().forEach(panel=>syncAuthPanel(panel,user));
   renderAuthNotice();
+  if(typeof requestAdminAccessRefresh==='function'){
+    requestAdminAccessRefresh();
+  }
 }
 
 function validateAuthInputs(panel){
@@ -408,6 +415,9 @@ function syncPageNav(id){
 }
 
 function goPage(id){
+  if(id==='admin'&&typeof hasAdminAccess==='function'&&!hasAdminAccess()){
+    id='home';
+  }
   const page=document.getElementById('page-'+id);
   if(!page)return;
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
@@ -429,6 +439,7 @@ function goPage(id){
   if(id==='tips')renderTips('all');
   if(id==='settings')renderSettings();
   if(id==='home')renderHome();
+  if(id==='admin'&&typeof renderAdmin==='function')renderAdmin();
 }
 
 function setEnergy(v,persist=true){
@@ -554,8 +565,12 @@ document.addEventListener('touchend', () => {
 // Enhance existing goPage() function for fluid transitions
 const originalGoPage = window.goPage || goPage; 
 window.goPage = (pageId) => {
+  let resolvedPageId = pageId;
+  if(resolvedPageId === 'admin' && typeof hasAdminAccess === 'function' && !hasAdminAccess()){
+    resolvedPageId = 'home';
+  }
   const activePage = document.querySelector('.page.active') || document.querySelector('main > div:not(.hidden)');
-  const targetPage = document.getElementById('page-' + pageId);
+  const targetPage = document.getElementById('page-' + resolvedPageId);
   
   if(activePage && targetPage && activePage !== targetPage && !activePage.classList.contains('page-exit')) {
     activePage.classList.add('page-exit');
@@ -563,7 +578,7 @@ window.goPage = (pageId) => {
     setTimeout(() => {
       activePage.classList.remove('active', 'page-exit');
       targetPage.classList.add('active', 'page-enter');
-      originalGoPage(pageId); // actually render new content
+      originalGoPage(resolvedPageId); // actually render new content
       
       const staggerItems = targetPage.querySelectorAll('.card, .mvd-task, .stat-card, .goal-card, .problem-card, .tip-card');
       staggerItems.forEach((el, i) => {
@@ -575,7 +590,7 @@ window.goPage = (pageId) => {
       statNums.forEach(num => animateCounter(num, num.getAttribute('data-val') || num.textContent));
       
       // Habits load animation
-      if (pageId === 'habits') {
+      if (resolvedPageId === 'habits') {
         const dots = targetPage.querySelectorAll('.habit-day:not(.rendered)');
         dots.forEach((dot, index) => {
           dot.classList.add('rendered');
@@ -596,7 +611,7 @@ window.goPage = (pageId) => {
       setTimeout(() => targetPage.classList.remove('page-enter'), 300);
     }, 150);
   } else if (!activePage || activePage === targetPage) {
-     originalGoPage(pageId);
+     originalGoPage(resolvedPageId);
   }
 };
 goPage = window.goPage;

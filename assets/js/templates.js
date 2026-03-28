@@ -26,6 +26,7 @@ const DESKTOP_NAV_SECTIONS=[
       {page:'guide',icon:'💡',label:'دليل التطور'},
       {page:'tips',icon:'✦',label:'مكتبة النصائح',badge:'١٢'},
       {page:'settings',icon:'⚙',label:'الإعدادات'},
+      {page:'admin',icon:'🛡',label:'لوحة التحكم',adminOnly:true},
     ],
   },
 ];
@@ -45,10 +46,13 @@ const MOBILE_NAV_ITEMS=[
   {page:'guide',icon:'💡',label:'دليل التطور'},
   {page:'tips',icon:'✦',label:'النصائح'},
   {page:'settings',icon:'⚙',label:'الإعدادات'},
+  {page:'admin',icon:'🛡',label:'لوحة التحكم',adminOnly:true},
 ];
 
 function renderDesktopNavItem(item){
-  return `<div class="nav-item ${item.active?'active':''}" data-page="${item.page}" onclick="goPage('${item.page}')"><span class="nav-icon">${item.icon}</span> ${item.label}${item.badge?` <span class="nav-badge">${item.badge}</span>`:''}</div>`;
+  const hiddenClass=item.adminOnly?' hidden':'';
+  const adminAttr=item.adminOnly?' data-admin-only="true"':'';
+  return `<div class="nav-item ${item.active?'active':''}${hiddenClass}" data-page="${item.page}"${adminAttr} onclick="goPage('${item.page}')"><span class="nav-icon">${item.icon}</span> ${item.label}${item.badge?` <span class="nav-badge">${item.badge}</span>`:''}</div>`;
 }
 
 function renderDesktopNavSection(section,index){
@@ -145,7 +149,9 @@ function renderDesktopSidebar(){
 }
 
 function renderMobileNavItem(item){
-  return `<button class="mobile-nav-btn ${item.active?'active':''}" data-page="${item.page}" onclick="goPage('${item.page}')"><span class="mobile-nav-icon">${item.icon}</span><span>${item.label}</span></button>`;
+  const hiddenClass=item.adminOnly?' hidden':'';
+  const adminAttr=item.adminOnly?' data-admin-only="true"':'';
+  return `<button class="mobile-nav-btn ${item.active?'active':''}${hiddenClass}" data-page="${item.page}"${adminAttr} onclick="goPage('${item.page}')"><span class="mobile-nav-icon">${item.icon}</span><span>${item.label}</span></button>`;
 }
 
 function renderMobileShell(){
@@ -789,6 +795,44 @@ function renderSettingsPage(){
 </div>`;
 }
 
+function renderAdminPage(){
+  return `<div class="page" id="page-admin">
+  <div class="page-header">
+    <div class="page-header-row">
+      <div>
+        <div class="page-title">لوحة التحكم</div>
+        <div class="page-subtitle">متابعة المستخدمين وبياناتهم من داخل Sama OS</div>
+      </div>
+      <div class="page-tools">
+        <button class="btn btn-ghost btn-sm" type="button" onclick="refreshAdminDashboard()">تحديث</button>
+      </div>
+    </div>
+  </div>
+  <div class="admin-shell">
+    <aside class="card admin-users-card">
+      <div class="admin-card-head">
+        <div>
+          <div class="section-label">المستخدمون</div>
+          <div class="admin-card-sub">ابحثي وافتحي أي مستخدم للمراجعة</div>
+        </div>
+      </div>
+      <div class="admin-search-row">
+        <input class="inp admin-search-input" id="admin-user-search" type="search" placeholder="ابحثي بالاسم أو البريد" oninput="updateAdminUserSearch(this.value)">
+      </div>
+      <div class="admin-list-meta" id="admin-list-meta">جاري التحميل...</div>
+      <div class="admin-user-list" id="admin-user-list">
+        <div class="admin-empty">جاري تحميل قائمة المستخدمين...</div>
+      </div>
+    </aside>
+    <section class="admin-detail-column">
+      <div class="card admin-detail-card" id="admin-detail-root">
+        <div class="admin-empty">اختاري مستخدمًا من القائمة لعرض التفاصيل.</div>
+      </div>
+    </section>
+  </div>
+</div>`;
+}
+
 function renderPages(){
   return [
     renderHomePage(),
@@ -806,6 +850,7 @@ function renderPages(){
     renderGuidePage(),
     renderAchievementsPage(),
     renderSettingsPage(),
+    renderAdminPage(),
   ].join('');
 }
 

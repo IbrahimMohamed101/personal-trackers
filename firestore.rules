@@ -10,12 +10,20 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == userId;
     }
 
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
     match /users/{userId} {
       allow create: if isOwner(userId);
-      allow read, update, delete: if isOwner(userId);
+      allow read: if isOwner(userId) || isAdmin();
+      allow update, delete: if isOwner(userId);
 
       match /{collectionName}/{docId} {
-        allow read, delete: if isOwner(userId);
+        allow read: if isOwner(userId) || isAdmin();
+        allow delete: if isOwner(userId);
         allow create, update: if isOwner(userId)
           && (!('ownerUid' in request.resource.data) || request.resource.data.ownerUid == userId);
       }

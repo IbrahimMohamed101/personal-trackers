@@ -40,6 +40,10 @@ function renderActivePage(){
   else if(pageId==='tips')renderTips('all');
   else if(pageId==='guide')renderGuide();
   else if(pageId==='settings')renderSettings();
+  else if(pageId==='admin'){
+    if(typeof hasAdminAccess==='function'&&hasAdminAccess()&&typeof renderAdmin==='function')renderAdmin();
+    else goPage('home');
+  }
   else renderHome();
 }
 
